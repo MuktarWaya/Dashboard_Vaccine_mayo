@@ -1,0 +1,3 @@
+# Include minimal proactive and alternative-vaccine capabilities in the initial release
+
+Proactive vaccination activities and Pattani PAO-supported alternative vaccines are already connected to real district direction and reporting needs, so postponing them would omit key operational value. The initial release will include registry setup and new-child intake, monthly follow-up and status dashboards, mobile field reporting by อสม./ผรส., minimal proactive activity management, and aggregate alternative-vaccine funnel reporting; activity-frequency compliance before an approved plan, direct PAO access, and parent occupation or research data are excluded from the initial scope.

@@ -1,0 +1,3 @@
+# Use two-tier notification and escalation for pending work
+
+Monthly confirmation and proactive activity closure depend on resolving pending items, but sending every ordinary item directly to district oversight would obscure service-unit responsibility and create alert fatigue. The system will keep pending monthly and activity work visible to responsible service-unit confirmers and relevant entry staff throughout the cycle, with reminders as deadlines approach; it will escalate to district administrators only when a unit or activity passes its deadline, approaches monthly close without readiness to submit, or has material completeness risks such as outage fallback records awaiting import or verification.

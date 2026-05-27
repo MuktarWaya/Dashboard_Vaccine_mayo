@@ -1,0 +1,3 @@
+# Model proactive vaccination sessions as tracked activities
+
+Activity-level reporting for proactive vaccination needs a verifiable link between planned targets, consent, attendance, confirmed service, and aggregate reporting to leadership and Pattani PAO. Each proactive service session will be represented as a system activity with a unique activity ID, date, site, host service unit, service type, lifecycle status, aggregate counts, and closer; children participating in planning and service will be linked internally by activity ID without exposing child-level records in external aggregate reports.

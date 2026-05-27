@@ -1,0 +1,3 @@
+# Gate the first KPI month on core readiness, not every initial module
+
+The initial system scope includes field mobile reporting, proactive activities, and alternative-vaccine funnel reporting, but requiring every module to be complete before starting monthly KPI may force rushed implementation or delay visibility unnecessarily. June may be declared a full KPI month only if the core KPI workflow passes dry-run readiness for validated baseline import, confirmed-unit coverage, unit staff access, monthly official-status handling, pending verification, locking, and core audit logs; supplementary initial-release modules may enter a controlled transition period if they do not affect core KPI correctness.

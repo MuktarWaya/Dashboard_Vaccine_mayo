@@ -1,0 +1,3 @@
+# Bulk-import the initial registry, then add new children through the web app
+
+Each service unit begins with approximately 200-600 child records, making one-by-one web entry burdensome, while ongoing edits must remain controlled through the web app. The system will accept one standardised initial template from each of the 14 units, validate CID uniqueness, birth dates, service-unit codes, principal อสม./ผรส., and baseline status, and require district-level approval before import; after initial import, newly born or transferred-in children will be added individually through the web app as entrants during implementation.

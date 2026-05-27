@@ -1,0 +1,3 @@
+# Assign district system ownership and govern policy changes
+
+The dashboard needs an accountable operational owner after launch for accounts, district-level access, audit and incident review, backup and recovery, and coordination of technical fixes, but day-to-day system administration must not silently redefine KPI or data-governance decisions. A designated district system owner, such as the district vaccine program owner or another appointed person, will manage operational stewardship and may approve operational-reference changes that do not alter report meaning. Changes to KPI rules, personal-data scope, role-based access boundaries, external reporting, or reuse of data for a new purpose require policy-level approval and a new recorded decision before implementation.
