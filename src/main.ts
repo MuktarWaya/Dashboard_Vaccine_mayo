@@ -1,8 +1,11 @@
 import type { BaselineBatch } from "./domain/baseline";
+import { acceptedBaselineDuplicateIssues } from "./domain/baselineExistingDuplicate";
 import { validateBaselineRows } from "./domain/validateBaseline";
 import { assertBaselineAction, type BaselineActor } from "./features/baseline/baselineAccess";
 import { BaselineService } from "./features/baseline/baselineService";
 import { SheetsBaselineRepository } from "./infrastructure/sheetsBaselineRepository";
+
+export const DISTRICT_SERVICE_UNIT_TOTAL = 14;
 
 export function applicationInfo() {
   return { application: "Dashboard Vaccine", capability: "baseline-registry", version: "0.1.0" } as const;
@@ -22,7 +25,7 @@ function actor(repo: SheetsBaselineRepository): BaselineActor {
 }
 
 function service(repo: SheetsBaselineRepository): BaselineService {
-  return new BaselineService(repo, repo.getApprovedServiceUnitCodes().size);
+  return new BaselineService(repo, DISTRICT_SERVICE_UNIT_TOTAL);
 }
 
 export function batchesVisibleToActor(actor: BaselineActor, batches: BaselineBatch[]): BaselineBatch[] {
@@ -73,13 +76,12 @@ function stageBaselineRows(
   assertBaselineAction("STAGE", activeActor);
 
   const approvedServiceUnitCodes = repo.getApprovedServiceUnitCodes();
-  const issues = validateBaselineRows(headers, rows, serviceUnitCode, approvedServiceUnitCodes);
+  const issues = [
+    ...validateBaselineRows(headers, rows, serviceUnitCode, approvedServiceUnitCodes),
+    ...acceptedBaselineDuplicateIssues(rows, repo.getAcceptedBaselineCids()),
+  ];
   const batchId = Utilities.getUuid();
-  if (issues.length === 0) {
-    repo.saveStagedRecords(batchId, rows);
-  }
-
-  return service(repo).stage({
+  const batch = service(repo).stage({
     batchId,
     serviceUnitCode,
     rowCount: rows.length,
@@ -87,6 +89,12 @@ function stageBaselineRows(
     actor: activeActor.email,
     at: new Date().toISOString(),
   });
+
+  if (batch.state === "VALIDATED") {
+    repo.saveStagedRecords(batchId, rows);
+  }
+
+  return batch;
 }
 
 function approveBaselineBatch(batchId: string) {

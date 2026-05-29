@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASELINE_HEADERS } from "../../src/domain/baseline";
+import { acceptedBaselineDuplicateIssues } from "../../src/domain/baselineExistingDuplicate";
 import { validateBaselineRows } from "../../src/domain/validateBaseline";
 
 describe("BASELINE_HEADERS", () => {
@@ -167,6 +168,27 @@ describe("validateBaselineRows", () => {
       "registry_status",
       "entry_type",
       "indicator_start_month",
+    ]);
+  });
+});
+
+describe("acceptedBaselineDuplicateIssues", () => {
+  it("reports accepted existing CIDs as row validation issues", () => {
+    expect(
+      acceptedBaselineDuplicateIssues(
+        [
+          ["1111111111111", "95001"],
+          ["2222222222222", "95001"],
+        ],
+        new Set(["2222222222222"]),
+      ),
+    ).toEqual([
+      {
+        rowNumber: 3,
+        field: "cid",
+        code: "DUPLICATE_EXISTING_CID",
+        message: "CID already exists in an accepted baseline import",
+      },
     ]);
   });
 });

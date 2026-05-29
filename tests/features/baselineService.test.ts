@@ -127,6 +127,35 @@ describe("BaselineService", () => {
     service.confirm("ok", "unit-confirmer", "2026-06-02T09:00:00+07:00");
     expect(service.coverage()).toEqual({ confirmedUnits: 1, totalUnits: 14, confirmedChildren: 20, provisionalChildren: 0 });
   });
+
+  it("rejects a second clean stage for a service unit until the previous attempt is rejected", () => {
+    const repository = new MemoryRepository();
+    const service = new BaselineService(repository, 14);
+
+    service.stage({ batchId: "first", serviceUnitCode: "95001", rowCount: 20, issues: [], actor: "district", at: "2026-06-01T09:00:00+07:00" });
+    const duplicate = service.stage({ batchId: "second", serviceUnitCode: "95001", rowCount: 5, issues: [], actor: "district", at: "2026-06-01T09:05:00+07:00" });
+
+    expect(duplicate).toMatchObject({
+      state: "REJECTED",
+      issues: [{ rowNumber: 1, field: "service_unit_code", code: "DUPLICATE_SERVICE_UNIT_BASELINE" }],
+    });
+  });
+
+  it("counts only one confirmed batch per service unit in coverage", () => {
+    const repository = new MemoryRepository();
+    repository.batches = [
+      { ...approvedBatch("first"), state: "UNIT_CONFIRMED", rowCount: 20, confirmedBy: "unit", confirmedAt: "2026-06-02T09:00:00+07:00" },
+      { ...approvedBatch("second"), state: "UNIT_CONFIRMED", rowCount: 5, confirmedBy: "unit", confirmedAt: "2026-06-02T09:10:00+07:00" },
+    ];
+    const service = new BaselineService(repository, 14);
+
+    expect(service.coverage()).toEqual({
+      confirmedUnits: 1,
+      totalUnits: 14,
+      confirmedChildren: 20,
+      provisionalChildren: 0,
+    });
+  });
 });
 
 describe("baseline sheet serialisation", () => {
@@ -173,5 +202,16 @@ describe("SheetsBaselineRepository", () => {
     spreadsheet.getSheetByName(TABLES.CFG_SERVICE_UNITS)?.appendRow([" 95002 ", "Inactive", " false "]);
 
     expect(repository.getApprovedServiceUnitCodes()).toEqual(new Set(["95001"]));
+  });
+
+  it("returns CIDs only from staged or registry rows attached to non-rejected batches", () => {
+    const { repository } = fakeRepository();
+    repository.saveBatch({ ...approvedBatch("validated"), state: "VALIDATED" });
+    repository.saveBatch({ ...approvedBatch("rejected"), state: "REJECTED" });
+    repository.saveStagedRecords("validated", [["1111111111111", "95001"]]);
+    repository.saveStagedRecords("rejected", [["2222222222222", "95001"]]);
+    repository.promoteApprovedRecords("validated");
+
+    expect(repository.getAcceptedBaselineCids()).toEqual(new Set(["1111111111111"]));
   });
 });

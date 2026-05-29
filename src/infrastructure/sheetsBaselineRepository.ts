@@ -189,6 +189,39 @@ export class SheetsBaselineRepository implements BaselineRepository {
     );
   }
 
+  getAcceptedBaselineCids(): Set<string> {
+    const acceptedBatchIds = new Set(
+      this.listBatches()
+        .filter((batch) => batch.state !== "REJECTED")
+        .map((batch) => batch.batchId),
+    );
+    const acceptedCids = new Set<string>();
+
+    if (acceptedBatchIds.size === 0) {
+      return acceptedCids;
+    }
+
+    this.readRecords(TABLES.BASELINE_STAGING).forEach((row) => {
+      if (acceptedBatchIds.has(String(row[0]))) {
+        const value = String(row[1]).trim();
+        if (value) {
+          acceptedCids.add(value);
+        }
+      }
+    });
+
+    this.readRecords(TABLES.CHILD_REGISTRY).forEach((row) => {
+      if (acceptedBatchIds.has(String(row[0]))) {
+        const value = String(row[1]).trim();
+        if (value) {
+          acceptedCids.add(value);
+        }
+      }
+    });
+
+    return acceptedCids;
+  }
+
   getActor(email: string): BaselineActor {
     const sheet = this.spreadsheet.getSheetByName(TABLES.CFG_BASELINE_USERS);
     if (!sheet) {
@@ -256,6 +289,16 @@ export class SheetsBaselineRepository implements BaselineRepository {
       .getRange(2, 1, lastRow - 1, 1)
       .getValues()
       .some((row) => String(row[0]) === batchId);
+  }
+
+  private readRecords(tableName: string): unknown[][] {
+    const sheet = this.spreadsheet.getSheetByName(tableName);
+    if (!sheet) {
+      throw new Error("Baseline tables are not provisioned");
+    }
+
+    const lastRow = sheet.getLastRow();
+    return lastRow < 2 ? [] : sheet.getRange(2, 1, lastRow - 1, 4).getValues();
   }
 }
 

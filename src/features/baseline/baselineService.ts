@@ -27,12 +27,26 @@ export class BaselineService {
   ) {}
 
   stage(command: StageCommand): BaselineBatch {
+    const issues = [...command.issues];
+    const hasActiveBatchForUnit = this.repository
+      .listBatches()
+      .some((batch) => batch.serviceUnitCode === command.serviceUnitCode && batch.state !== "REJECTED");
+
+    if (issues.length === 0 && hasActiveBatchForUnit) {
+      issues.push({
+        rowNumber: 1,
+        field: "service_unit_code",
+        code: "DUPLICATE_SERVICE_UNIT_BASELINE",
+        message: "Service unit already has an accepted baseline batch",
+      });
+    }
+
     const batch: BaselineBatch = {
       batchId: command.batchId,
       serviceUnitCode: command.serviceUnitCode,
-      state: command.issues.length === 0 ? "VALIDATED" : "REJECTED",
+      state: issues.length === 0 ? "VALIDATED" : "REJECTED",
       rowCount: command.rowCount,
-      issues: command.issues,
+      issues,
       stagedBy: command.actor,
       stagedAt: command.at,
     };
@@ -79,7 +93,15 @@ export class BaselineService {
 
   coverage(): BaselineCoverage {
     const batches = this.repository.listBatches();
-    const confirmedBatches = batches.filter((batch) => batch.state === "UNIT_CONFIRMED");
+    const confirmedBatchesByUnit = new Map<string, BaselineBatch>();
+    batches
+      .filter((batch) => batch.state === "UNIT_CONFIRMED")
+      .forEach((batch) => {
+        if (!confirmedBatchesByUnit.has(batch.serviceUnitCode)) {
+          confirmedBatchesByUnit.set(batch.serviceUnitCode, batch);
+        }
+      });
+    const confirmedBatches = [...confirmedBatchesByUnit.values()];
 
     return {
       confirmedUnits: confirmedBatches.length,
