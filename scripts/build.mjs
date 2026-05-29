@@ -18,3 +18,4 @@ await build({
 });
 
 await copyFile("appsscript.json", "dist/appsscript.json");
+await copyFile("src/ui/adminBaseline.html", "dist/adminBaseline.html");

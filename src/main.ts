@@ -125,7 +125,7 @@ function getBaselineAdminModel() {
 }
 
 function doGet(): GoogleAppsScript.HTML.HtmlOutput {
-  return HtmlService.createHtmlOutput("Dashboard Vaccine baseline registry");
+  return HtmlService.createHtmlOutputFromFile("adminBaseline").setTitle("Dashboard Vaccine - ทะเบียนตั้งต้น");
 }
 
 Object.assign(globalThis, {

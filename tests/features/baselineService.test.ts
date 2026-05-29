@@ -118,7 +118,7 @@ describe("BaselineService", () => {
     expect(() => service.approve("bad", "district", "2026-06-01T09:10:00+07:00")).toThrow("Batch has validation issues");
   });
 
-  it("does not count children as confirmed until unit confirmation", () => {
+  it("reports approved batches as provisional coverage until unit confirmation", () => {
     const repository = new MemoryRepository();
     const service = new BaselineService(repository, 14);
     service.stage({ batchId: "ok", serviceUnitCode: "95001", rowCount: 20, issues: [], actor: "district", at: "2026-06-01T09:00:00+07:00" });

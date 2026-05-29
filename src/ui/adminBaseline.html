@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <title>Dashboard Vaccine - ทะเบียนตั้งต้น</title>
+    <style>
+      body {
+        margin: 24px;
+        color: #1f2937;
+        font: 16px Arial, sans-serif;
+      }
+
+      label,
+      textarea,
+      input {
+        display: block;
+      }
+
+      input,
+      textarea {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 960px;
+        margin-top: 6px;
+        padding: 8px;
+      }
+
+      textarea {
+        min-height: 180px;
+        font-family: Consolas, monospace;
+      }
+
+      button {
+        margin: 6px 6px 6px 0;
+        padding: 8px 12px;
+      }
+
+      table {
+        width: 100%;
+        margin-top: 16px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+      }
+
+      .notice {
+        max-width: 960px;
+        padding: 12px;
+        border-left: 4px solid #f59e0b;
+        background: #fffbeb;
+      }
+
+      .message {
+        min-height: 24px;
+        color: #374151;
+      }
+
+      .error {
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>จัดการทะเบียนตั้งต้น</h1>
+
+    <p class="notice">
+      ยอดชั่วคราวที่ยังไม่ยืนยันเป็นข้อมูลระหว่างตรวจรับเท่านั้น และยังไม่ใช่ฐาน KPI ที่ยืนยันแล้ว
+    </p>
+
+    <section>
+      <h2>นำเข้าข้อมูลตั้งต้น</h2>
+      <label>
+        รหัสหน่วยบริการ
+        <input id="serviceUnitCode" autocomplete="off" maxlength="5" inputmode="numeric">
+      </label>
+      <p>
+        <label>
+          วางข้อมูล staging แบบ tab-separated พร้อมหัวคอลัมน์
+          <textarea id="stagingData" spellcheck="false"></textarea>
+        </label>
+      </p>
+      <button type="button" id="stageButton">ตรวจและจัดชุดนำเข้า</button>
+      <p id="message" class="message" role="status"></p>
+    </section>
+
+    <section>
+      <h2>ภาพรวมการยืนยัน</h2>
+      <button type="button" id="refreshButton">รีเฟรช</button>
+      <p id="coverage">กำลังโหลดสถานะ...</p>
+      <table>
+        <thead>
+          <tr>
+            <th>รหัสหน่วยบริการ</th>
+            <th>สถานะชุดข้อมูล</th>
+            <th>จำนวนแถว</th>
+            <th>จำนวนประเด็น</th>
+            <th>การดำเนินการ</th>
+          </tr>
+        </thead>
+        <tbody id="batches"></tbody>
+      </table>
+    </section>
+
+    <script>
+      function text(value) {
+        return value == null ? "" : String(value);
+      }
+
+      function setMessage(value, isError) {
+        var message = document.getElementById("message");
+        message.textContent = text(value);
+        message.className = isError ? "message error" : "message";
+      }
+
+      function endpointError(error) {
+        setMessage(error && error.message ? error.message : error, true);
+      }
+
+      function parseStagingData(raw) {
+        var lines = raw.split(/\r?\n/).filter(function (line) {
+          return line.trim() !== "";
+        });
+        return lines.map(function (line) {
+          return line.split("\t");
+        });
+      }
+
+      function callServer(successHandler) {
+        return google.script.run
+          .withFailureHandler(endpointError)
+          .withSuccessHandler(successHandler);
+      }
+
+      function renderCoverage(coverage) {
+        document.getElementById("coverage").textContent =
+          "หน่วยบริการที่ยืนยันแล้ว " + text(coverage.confirmedUnits) + " จาก " + text(coverage.totalUnits) +
+          " หน่วย; จำนวนแถวที่ยืนยันแล้ว " + text(coverage.confirmedChildren) +
+          "; จำนวนแถวชั่วคราวที่รอยืนยัน " + text(coverage.provisionalChildren);
+      }
+
+      function appendCell(row, value) {
+        var cell = document.createElement("td");
+        cell.textContent = text(value);
+        row.appendChild(cell);
+        return cell;
+      }
+
+      function appendAction(actions, label, handler) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.textContent = label;
+        button.addEventListener("click", handler);
+        actions.appendChild(button);
+      }
+
+      function renderBatches(batches) {
+        var body = document.getElementById("batches");
+        body.textContent = "";
+
+        batches.forEach(function (batch) {
+          var row = document.createElement("tr");
+          appendCell(row, batch.serviceUnitCode);
+          appendCell(row, batch.state);
+          appendCell(row, batch.rowCount);
+          appendCell(row, batch.issues ? batch.issues.length : 0);
+
+          var actions = document.createElement("td");
+          if (batch.state === "VALIDATED") {
+            appendAction(actions, "อนุมัติ", function () {
+              approve(batch.batchId);
+            });
+          }
+          if (batch.state === "DISTRICT_APPROVED") {
+            appendAction(actions, "ยืนยัน", function () {
+              confirmBatch(batch.batchId);
+            });
+          }
+          if (!actions.childNodes.length) {
+            actions.textContent = "-";
+          }
+          row.appendChild(actions);
+          body.appendChild(row);
+        });
+      }
+
+      function refresh() {
+        setMessage("กำลังรีเฟรช...", false);
+        callServer(function (model) {
+          renderCoverage(model.coverage);
+          renderBatches(model.batches || []);
+          setMessage("โหลดข้อมูลล่าสุดแล้ว", false);
+        }).getBaselineAdminModel();
+      }
+
+      function stageRows() {
+        var table = parseStagingData(document.getElementById("stagingData").value);
+        if (table.length < 2) {
+          setMessage("กรุณาวางหัวคอลัมน์และข้อมูลอย่างน้อย 1 แถว", true);
+          return;
+        }
+
+        setMessage("กำลังตรวจข้อมูล...", false);
+        callServer(function (batch) {
+          setMessage("สร้างชุดข้อมูล " + text(batch.state) + " พบประเด็น " + text(batch.issues ? batch.issues.length : 0) + " รายการ", false);
+          refresh();
+        }).stageBaselineRows(document.getElementById("serviceUnitCode").value.trim(), table[0], table.slice(1));
+      }
+
+      function approve(batchId) {
+        setMessage("กำลังอนุมัติ...", false);
+        callServer(refresh).approveBaselineBatch(batchId);
+      }
+
+      function confirmBatch(batchId) {
+        setMessage("กำลังยืนยัน...", false);
+        callServer(refresh).confirmBaselineBatch(batchId);
+      }
+
+      document.getElementById("stageButton").addEventListener("click", stageRows);
+      document.getElementById("refreshButton").addEventListener("click", refresh);
+      refresh();
+    </script>
+  </body>
+</html>
