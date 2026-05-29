@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { approvedRegistryRows, baselineBatchToRow, baselineRowToBatch } from "../../src/infrastructure/sheetsBaselineRepository";
 import { BaselineService, type BaselineRepository } from "../../src/features/baseline/baselineService";
 import type { BaselineBatch } from "../../src/domain/baseline";
 
@@ -28,5 +29,21 @@ describe("BaselineService", () => {
     expect(service.coverage()).toEqual({ confirmedUnits: 0, totalUnits: 14, confirmedChildren: 0, provisionalChildren: 20 });
     service.confirm("ok", "unit-confirmer", "2026-06-02T09:00:00+07:00");
     expect(service.coverage()).toEqual({ confirmedUnits: 1, totalUnits: 14, confirmedChildren: 20, provisionalChildren: 0 });
+  });
+});
+
+describe("baseline sheet serialisation", () => {
+  it("round-trips an approved batch without losing the audit identity", () => {
+    const batch: BaselineBatch = {
+      batchId: "batch-1", serviceUnitCode: "95001", state: "DISTRICT_APPROVED",
+      rowCount: 20, issues: [], stagedBy: "importer", stagedAt: "2026-06-01T09:00:00+07:00",
+      approvedBy: "approver", approvedAt: "2026-06-01T10:00:00+07:00",
+    };
+    expect(baselineRowToBatch(baselineBatchToRow(batch))).toEqual(batch);
+  });
+
+  it("promotes only staged rows belonging to the approved batch", () => {
+    const staged = [["batch-1", "111", "95001", "{}"], ["batch-2", "222", "95002", "{}"]];
+    expect(approvedRegistryRows("batch-1", staged)).toEqual([["batch-1", "111", "95001", "{}"]]);
   });
 });
