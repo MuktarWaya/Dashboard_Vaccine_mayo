@@ -1,4 +1,5 @@
 import type { BaselineBatch } from "../domain/baseline";
+import type { BaselineActor } from "../features/baseline/baselineAccess";
 import type { BaselineRepository } from "../features/baseline/baselineService";
 
 export const TABLES = {
@@ -173,6 +174,32 @@ export class SheetsBaselineRepository implements BaselineRepository {
         .filter((row) => String(row[2]).trim().toUpperCase() === "TRUE")
         .map((row) => String(row[0]).trim()),
     );
+  }
+
+  getActor(email: string): BaselineActor {
+    const sheet = this.spreadsheet.getSheetByName(TABLES.CFG_BASELINE_USERS);
+    if (!sheet) {
+      throw new Error("Baseline user configuration is missing");
+    }
+
+    const lastRow = sheet.getLastRow();
+    const requestedEmail = email.trim().toLowerCase();
+    const rows = lastRow < 2 ? [] : sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+    const match = rows.find((row) => {
+      const rowEmail = String(row[0]).trim().toLowerCase();
+      const active = String(row[3]).trim().toUpperCase();
+      return rowEmail === requestedEmail && active === "TRUE";
+    });
+
+    if (!match) {
+      throw new Error("Not authorized for baseline workflow");
+    }
+
+    return {
+      email: String(match[0]).trim(),
+      role: String(match[1]).trim() as BaselineActor["role"],
+      serviceUnitCode: String(match[2]).trim(),
+    };
   }
 
   private batchSheet(): GoogleAppsScript.Spreadsheet.Sheet {
