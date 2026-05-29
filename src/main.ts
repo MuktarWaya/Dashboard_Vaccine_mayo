@@ -2,7 +2,10 @@ import type { BaselineBatch } from "./domain/baseline";
 import { acceptedBaselineDuplicateIssues } from "./domain/baselineExistingDuplicate";
 import { validateBaselineRows } from "./domain/validateBaseline";
 import { assertBaselineAction, type BaselineActor } from "./features/baseline/baselineAccess";
-import { BaselineService } from "./features/baseline/baselineService";
+import {
+  BaselineService,
+  duplicateServiceUnitBaselineIssues,
+} from "./features/baseline/baselineService";
 import { SheetsBaselineRepository } from "./infrastructure/sheetsBaselineRepository";
 
 export const DISTRICT_SERVICE_UNIT_TOTAL = 14;
@@ -79,8 +82,13 @@ function stageBaselineRows(
   const issues = [
     ...validateBaselineRows(headers, rows, serviceUnitCode, approvedServiceUnitCodes),
     ...acceptedBaselineDuplicateIssues(rows, repo.getAcceptedBaselineCids()),
+    ...duplicateServiceUnitBaselineIssues(serviceUnitCode, repo.listBatches()),
   ];
   const batchId = Utilities.getUuid();
+  if (issues.length === 0) {
+    repo.saveStagedRecords(batchId, rows);
+  }
+
   const batch = service(repo).stage({
     batchId,
     serviceUnitCode,
@@ -89,10 +97,6 @@ function stageBaselineRows(
     actor: activeActor.email,
     at: new Date().toISOString(),
   });
-
-  if (batch.state === "VALIDATED") {
-    repo.saveStagedRecords(batchId, rows);
-  }
 
   return batch;
 }

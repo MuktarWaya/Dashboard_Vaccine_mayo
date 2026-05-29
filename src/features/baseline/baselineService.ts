@@ -20,6 +20,26 @@ export interface StageCommand {
   at: string;
 }
 
+export function duplicateServiceUnitBaselineIssues(
+  serviceUnitCode: string,
+  batches: readonly BaselineBatch[],
+): ValidationIssue[] {
+  const hasActiveBatchForUnit = batches.some(
+    (batch) => batch.serviceUnitCode === serviceUnitCode && batch.state !== "REJECTED",
+  );
+
+  return hasActiveBatchForUnit
+    ? [
+        {
+          rowNumber: 1,
+          field: "service_unit_code",
+          code: "DUPLICATE_SERVICE_UNIT_BASELINE",
+          message: "Service unit already has an accepted baseline batch",
+        },
+      ]
+    : [];
+}
+
 export class BaselineService {
   constructor(
     private readonly repository: BaselineRepository,
@@ -27,19 +47,15 @@ export class BaselineService {
   ) {}
 
   stage(command: StageCommand): BaselineBatch {
-    const issues = [...command.issues];
-    const hasActiveBatchForUnit = this.repository
-      .listBatches()
-      .some((batch) => batch.serviceUnitCode === command.serviceUnitCode && batch.state !== "REJECTED");
-
-    if (issues.length === 0 && hasActiveBatchForUnit) {
-      issues.push({
-        rowNumber: 1,
-        field: "service_unit_code",
-        code: "DUPLICATE_SERVICE_UNIT_BASELINE",
-        message: "Service unit already has an accepted baseline batch",
-      });
-    }
+    const issues =
+      command.issues.length === 0
+        ? [
+            ...duplicateServiceUnitBaselineIssues(
+              command.serviceUnitCode,
+              this.repository.listBatches(),
+            ),
+          ]
+        : [...command.issues];
 
     const batch: BaselineBatch = {
       batchId: command.batchId,
