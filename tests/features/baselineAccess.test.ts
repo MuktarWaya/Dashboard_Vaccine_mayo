@@ -6,6 +6,10 @@ import {
 } from "../../src/features/baseline/baselineAccess";
 import type { BaselineBatch } from "../../src/domain/baseline";
 import { SheetsBaselineRepository, TABLES } from "../../src/infrastructure/sheetsBaselineRepository";
+import {
+  approveAndPromoteBaselineBatch,
+  batchesVisibleToActor,
+} from "../../src/main";
 
 const districtActor: BaselineActor = {
   email: "district@example.org",
@@ -146,5 +150,92 @@ describe("baseline actor lookup", () => {
     );
 
     expect(() => repository.getActor("unit@example.org")).toThrow("Baseline user configuration is missing");
+  });
+
+  it("rejects inactive baseline users", () => {
+    const { repository, spreadsheet } = fakeRepository();
+    spreadsheet
+      .getSheetByName(TABLES.CFG_BASELINE_USERS)
+      ?.appendRow(["unit@example.org", "UNIT_CONFIRMER", "95001", "false"]);
+
+    expect(() => repository.getActor("unit@example.org")).toThrow("Not authorized for baseline workflow");
+  });
+
+  it("rejects duplicate active actors for the same email", () => {
+    const { repository, spreadsheet } = fakeRepository();
+    spreadsheet
+      .getSheetByName(TABLES.CFG_BASELINE_USERS)
+      ?.appendRow(["unit@example.org", "UNIT_CONFIRMER", "95001", "true"]);
+    spreadsheet
+      .getSheetByName(TABLES.CFG_BASELINE_USERS)
+      ?.appendRow([" UNIT@example.org ", "UNIT_CONFIRMER", "95002", "true"]);
+
+    expect(() => repository.getActor("unit@example.org")).toThrow("Duplicate baseline actor");
+  });
+
+  it("rejects invalid baseline roles", () => {
+    const { repository, spreadsheet } = fakeRepository();
+    spreadsheet
+      .getSheetByName(TABLES.CFG_BASELINE_USERS)
+      ?.appendRow(["unit@example.org", "DISTRICT_ADMIN", "95001", "true"]);
+
+    expect(() => repository.getActor("unit@example.org")).toThrow("Invalid baseline role");
+  });
+});
+
+describe("baseline admin scoping", () => {
+  it("shows district approvers every batch and unit confirmers only their own unit", () => {
+    const ownBatch = batch("95001");
+    const otherBatch = { ...batch("95002"), batchId: "batch-2" };
+
+    expect(batchesVisibleToActor(districtActor, [ownBatch, otherBatch])).toEqual([ownBatch, otherBatch]);
+    expect(batchesVisibleToActor(unitActor, [ownBatch, otherBatch])).toEqual([ownBatch]);
+  });
+});
+
+describe("baseline approval promotion safety", () => {
+  it("reverts the batch to its prior validated state when registry promotion fails", () => {
+    const validated = {
+      ...batch("95001"),
+      state: "VALIDATED",
+      approvedBy: undefined,
+      approvedAt: undefined,
+    } satisfies BaselineBatch;
+    const updates: BaselineBatch[] = [];
+    const repository = {
+      getBatch: () => validated,
+      assertStagedRecordsExist: () => undefined,
+      updateBatch: (next: BaselineBatch) => updates.push(next),
+      promoteApprovedRecords: () => {
+        throw new Error("Registry write failed");
+      },
+    };
+    const service = {
+      approve: (batchId: string, actorEmail: string, at: string) => {
+        const approved = {
+          ...validated,
+          batchId,
+          state: "DISTRICT_APPROVED",
+          approvedBy: actorEmail,
+          approvedAt: at,
+        } satisfies BaselineBatch;
+        updates.push(approved);
+        return approved;
+      },
+    };
+
+    expect(() =>
+      approveAndPromoteBaselineBatch(
+        repository,
+        service,
+        districtActor,
+        "batch-1",
+        "2026-06-01T10:00:00+07:00",
+      ),
+    ).toThrow("Registry write failed");
+    expect(updates).toEqual([
+      expect.objectContaining({ state: "DISTRICT_APPROVED" }),
+      validated,
+    ]);
   });
 });

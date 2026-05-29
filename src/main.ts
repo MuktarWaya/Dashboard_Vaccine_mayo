@@ -1,3 +1,4 @@
+import type { BaselineBatch } from "./domain/baseline";
 import { validateBaselineRows } from "./domain/validateBaseline";
 import { assertBaselineAction, type BaselineActor } from "./features/baseline/baselineAccess";
 import { BaselineService } from "./features/baseline/baselineService";
@@ -24,6 +25,38 @@ function service(repo: SheetsBaselineRepository): BaselineService {
   return new BaselineService(repo, repo.getApprovedServiceUnitCodes().size);
 }
 
+export function batchesVisibleToActor(actor: BaselineActor, batches: BaselineBatch[]): BaselineBatch[] {
+  if (actor.role === "DISTRICT_APPROVER") {
+    return batches;
+  }
+
+  return batches.filter((batch) => batch.serviceUnitCode === actor.serviceUnitCode);
+}
+
+export function approveAndPromoteBaselineBatch(
+  repo: Pick<SheetsBaselineRepository, "getBatch" | "assertStagedRecordsExist" | "updateBatch" | "promoteApprovedRecords">,
+  workflow: Pick<BaselineService, "approve">,
+  activeActor: BaselineActor,
+  batchId: string,
+  at: string,
+): BaselineBatch {
+  const previous = repo.getBatch(batchId);
+  assertBaselineAction("APPROVE", activeActor, previous);
+  repo.assertStagedRecordsExist(batchId);
+
+  const approved = workflow.approve(batchId, activeActor.email, at);
+  try {
+    repo.promoteApprovedRecords(batchId);
+  } catch (error) {
+    if (previous) {
+      repo.updateBatch(previous);
+    }
+    throw error;
+  }
+
+  return approved;
+}
+
 function provisionBaselineTables(): { status: string } {
   const repo = repository();
   repo.provision();
@@ -41,32 +74,33 @@ function stageBaselineRows(
 
   const approvedServiceUnitCodes = repo.getApprovedServiceUnitCodes();
   const issues = validateBaselineRows(headers, rows, serviceUnitCode, approvedServiceUnitCodes);
-  const batch = service(repo).stage({
-    batchId: Utilities.getUuid(),
+  const batchId = Utilities.getUuid();
+  if (issues.length === 0) {
+    repo.saveStagedRecords(batchId, rows);
+  }
+
+  return service(repo).stage({
+    batchId,
     serviceUnitCode,
     rowCount: rows.length,
     issues,
     actor: activeActor.email,
     at: new Date().toISOString(),
   });
-
-  if (batch.state === "VALIDATED") {
-    repo.saveStagedRecords(batch.batchId, rows);
-  }
-
-  return batch;
 }
 
 function approveBaselineBatch(batchId: string) {
   const repo = repository();
   const activeActor = actor(repo);
   const workflow = service(repo);
-  const batch = repo.getBatch(batchId);
-  assertBaselineAction("APPROVE", activeActor, batch);
+  const lock = LockService.getDocumentLock();
 
-  const approved = workflow.approve(batchId, activeActor.email, new Date().toISOString());
-  repo.promoteApprovedRecords(batchId);
-  return approved;
+  lock.waitLock(30_000);
+  try {
+    return approveAndPromoteBaselineBatch(repo, workflow, activeActor, batchId, new Date().toISOString());
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function confirmBaselineBatch(batchId: string) {
@@ -81,17 +115,17 @@ function confirmBaselineBatch(batchId: string) {
 
 function getBaselineAdminModel() {
   const repo = repository();
-  actor(repo);
+  const activeActor = actor(repo);
   const workflow = service(repo);
 
   return {
     coverage: workflow.coverage(),
-    batches: repo.listBatches(),
+    batches: batchesVisibleToActor(activeActor, repo.listBatches()),
   };
 }
 
 function doGet(): GoogleAppsScript.HTML.HtmlOutput {
-  return HtmlService.createHtmlOutputFromFile("adminBaseline").setTitle("Dashboard Vaccine - ทะเบียนตั้งต้น");
+  return HtmlService.createHtmlOutput("Dashboard Vaccine baseline registry");
 }
 
 Object.assign(globalThis, {

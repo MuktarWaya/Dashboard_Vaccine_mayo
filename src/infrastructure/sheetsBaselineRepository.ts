@@ -156,6 +156,19 @@ export class SheetsBaselineRepository implements BaselineRepository {
     registry.getRange(registry.getLastRow() + 1, 1, approvedRows.length, 4).setValues(approvedRows);
   }
 
+  assertStagedRecordsExist(batchId: string): void {
+    const staging = this.spreadsheet.getSheetByName(TABLES.BASELINE_STAGING);
+    if (!staging) {
+      throw new Error("Baseline tables are not provisioned");
+    }
+
+    const lastRow = staging.getLastRow();
+    const stagedRows = lastRow < 2 ? [] : staging.getRange(2, 1, lastRow - 1, 4).getValues();
+    if (approvedRegistryRows(batchId, stagedRows).length === 0) {
+      throw new Error("No staged records for approved batch");
+    }
+  }
+
   getApprovedServiceUnitCodes(): Set<string> {
     const sheet = this.spreadsheet.getSheetByName(TABLES.CFG_SERVICE_UNITS);
     if (!sheet) {
@@ -185,19 +198,24 @@ export class SheetsBaselineRepository implements BaselineRepository {
     const lastRow = sheet.getLastRow();
     const requestedEmail = email.trim().toLowerCase();
     const rows = lastRow < 2 ? [] : sheet.getRange(2, 1, lastRow - 1, 4).getValues();
-    const match = rows.find((row) => {
-      const rowEmail = String(row[0]).trim().toLowerCase();
-      const active = String(row[3]).trim().toUpperCase();
-      return rowEmail === requestedEmail && active === "TRUE";
-    });
+    const matches = rows.filter((row) => rowMatchesActorEmail(row, requestedEmail));
 
-    if (!match) {
+    if (matches.length === 0) {
       throw new Error("Not authorized for baseline workflow");
+    }
+    if (matches.length > 1) {
+      throw new Error("Duplicate baseline actor");
+    }
+
+    const match = matches[0];
+    const role = String(match[1]).trim().toUpperCase();
+    if (role !== "DISTRICT_APPROVER" && role !== "UNIT_CONFIRMER") {
+      throw new Error("Invalid baseline role");
     }
 
     return {
       email: String(match[0]).trim(),
-      role: String(match[1]).trim() as BaselineActor["role"],
+      role,
       serviceUnitCode: String(match[2]).trim(),
     };
   }
@@ -239,4 +257,10 @@ export class SheetsBaselineRepository implements BaselineRepository {
       .getValues()
       .some((row) => String(row[0]) === batchId);
   }
+}
+
+function rowMatchesActorEmail(row: unknown[], requestedEmail: string): boolean {
+  const rowEmail = String(row[0]).trim().toLowerCase();
+  const active = String(row[3]).trim().toUpperCase();
+  return rowEmail === requestedEmail && active === "TRUE";
 }
