@@ -77,28 +77,34 @@ function stageBaselineRows(
   const repo = repository();
   const activeActor = actor(repo);
   assertBaselineAction("STAGE", activeActor);
+  const lock = LockService.getDocumentLock();
 
-  const approvedServiceUnitCodes = repo.getApprovedServiceUnitCodes();
-  const issues = [
-    ...validateBaselineRows(headers, rows, serviceUnitCode, approvedServiceUnitCodes),
-    ...acceptedBaselineDuplicateIssues(rows, repo.getAcceptedBaselineCids()),
-    ...duplicateServiceUnitBaselineIssues(serviceUnitCode, repo.listBatches()),
-  ];
-  const batchId = Utilities.getUuid();
-  if (issues.length === 0) {
-    repo.saveStagedRecords(batchId, rows);
+  lock.waitLock(30_000);
+  try {
+    const approvedServiceUnitCodes = repo.getApprovedServiceUnitCodes();
+    const issues = [
+      ...validateBaselineRows(headers, rows, serviceUnitCode, approvedServiceUnitCodes),
+      ...acceptedBaselineDuplicateIssues(rows, repo.getAcceptedBaselineCids()),
+      ...duplicateServiceUnitBaselineIssues(serviceUnitCode, repo.listBatches()),
+    ];
+    const batchId = Utilities.getUuid();
+    if (issues.length === 0) {
+      repo.saveStagedRecords(batchId, rows);
+    }
+
+    const batch = service(repo).stage({
+      batchId,
+      serviceUnitCode,
+      rowCount: rows.length,
+      issues,
+      actor: activeActor.email,
+      at: new Date().toISOString(),
+    });
+
+    return batch;
+  } finally {
+    lock.releaseLock();
   }
-
-  const batch = service(repo).stage({
-    batchId,
-    serviceUnitCode,
-    rowCount: rows.length,
-    issues,
-    actor: activeActor.email,
-    at: new Date().toISOString(),
-  });
-
-  return batch;
 }
 
 function approveBaselineBatch(batchId: string) {
