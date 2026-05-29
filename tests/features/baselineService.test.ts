@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { approvedRegistryRows, baselineBatchToRow, baselineRowToBatch } from "../../src/infrastructure/sheetsBaselineRepository";
+import {
+  approvedRegistryRows,
+  baselineBatchToRow,
+  baselineRowToBatch,
+  SheetsBaselineRepository,
+  TABLES,
+} from "../../src/infrastructure/sheetsBaselineRepository";
 import { BaselineService, type BaselineRepository } from "../../src/features/baseline/baselineService";
 import type { BaselineBatch } from "../../src/domain/baseline";
 
@@ -11,6 +17,97 @@ class MemoryRepository implements BaselineRepository {
   }
   getBatch(id: string) { return this.batches.find((item) => item.batchId === id); }
   listBatches() { return this.batches; }
+}
+
+class FakeRange {
+  constructor(
+    private readonly sheet: FakeSheet,
+    private readonly row: number,
+    private readonly column: number,
+    private readonly rowCount: number,
+    private readonly columnCount: number,
+  ) {}
+
+  getValues(): unknown[][] {
+    return Array.from({ length: this.rowCount }, (_, rowOffset) =>
+      Array.from(
+        { length: this.columnCount },
+        (_, columnOffset) => this.sheet.cell(this.row + rowOffset, this.column + columnOffset),
+      ),
+    );
+  }
+
+  setValues(values: unknown[][]): void {
+    values.forEach((row, rowOffset) => {
+      row.forEach((value, columnOffset) => {
+        this.sheet.setCell(this.row + rowOffset, this.column + columnOffset, value);
+      });
+    });
+  }
+}
+
+class FakeSheet {
+  rows: unknown[][] = [];
+
+  appendRow(row: unknown[]): void {
+    this.rows.push([...row]);
+  }
+
+  getRange(row: number, column: number, rowCount: number, columnCount: number): FakeRange {
+    return new FakeRange(this, row, column, rowCount, columnCount);
+  }
+
+  getLastRow(): number {
+    return this.rows.length;
+  }
+
+  cell(row: number, column: number): unknown {
+    return this.rows[row - 1]?.[column - 1] ?? "";
+  }
+
+  setCell(row: number, column: number, value: unknown): void {
+    while (this.rows.length < row) {
+      this.rows.push([]);
+    }
+    this.rows[row - 1][column - 1] = value;
+  }
+}
+
+class FakeSpreadsheet {
+  sheets = new Map<string, FakeSheet>();
+
+  getSheetByName(name: string): FakeSheet | null {
+    return this.sheets.get(name) ?? null;
+  }
+
+  insertSheet(name: string): FakeSheet {
+    const sheet = new FakeSheet();
+    this.sheets.set(name, sheet);
+    return sheet;
+  }
+}
+
+function fakeRepository() {
+  const spreadsheet = new FakeSpreadsheet();
+  const repository = new SheetsBaselineRepository(
+    spreadsheet as unknown as GoogleAppsScript.Spreadsheet.Spreadsheet,
+  );
+  repository.provision();
+  return { repository, spreadsheet };
+}
+
+function approvedBatch(batchId = "batch-1"): BaselineBatch {
+  return {
+    batchId,
+    serviceUnitCode: "95001",
+    state: "DISTRICT_APPROVED",
+    rowCount: 20,
+    issues: [],
+    stagedBy: "importer",
+    stagedAt: "2026-06-01T09:00:00+07:00",
+    approvedBy: "approver",
+    approvedAt: "2026-06-01T10:00:00+07:00",
+  };
 }
 
 describe("BaselineService", () => {
@@ -45,5 +142,36 @@ describe("baseline sheet serialisation", () => {
   it("promotes only staged rows belonging to the approved batch", () => {
     const staged = [["batch-1", "111", "95001", "{}"], ["batch-2", "222", "95002", "{}"]];
     expect(approvedRegistryRows("batch-1", staged)).toEqual([["batch-1", "111", "95001", "{}"]]);
+  });
+});
+
+describe("SheetsBaselineRepository", () => {
+  it("rejects duplicate batch ids", () => {
+    const { repository } = fakeRepository();
+    repository.saveBatch(approvedBatch());
+
+    expect(() => repository.saveBatch(approvedBatch())).toThrow("Duplicate baseline batch");
+  });
+
+  it("promotes approved staged rows only once for the same batch id", () => {
+    const { repository, spreadsheet } = fakeRepository();
+    repository.saveStagedRecords("batch-1", [["111", "95001"], ["222", "95001"]]);
+
+    repository.promoteApprovedRecords("batch-1");
+    repository.promoteApprovedRecords("batch-1");
+
+    expect(spreadsheet.getSheetByName(TABLES.CHILD_REGISTRY)?.rows).toEqual([
+      ["approved_batch_id", "cid", "service_unit_code", "record_json"],
+      ["batch-1", "111", "95001", JSON.stringify(["111", "95001"])],
+      ["batch-1", "222", "95001", JSON.stringify(["222", "95001"])],
+    ]);
+  });
+
+  it("trims service unit codes and active values", () => {
+    const { repository, spreadsheet } = fakeRepository();
+    spreadsheet.getSheetByName(TABLES.CFG_SERVICE_UNITS)?.appendRow([" 95001 ", "Mayo", " true "]);
+    spreadsheet.getSheetByName(TABLES.CFG_SERVICE_UNITS)?.appendRow([" 95002 ", "Inactive", " false "]);
+
+    expect(repository.getApprovedServiceUnitCodes()).toEqual(new Set(["95001"]));
   });
 });

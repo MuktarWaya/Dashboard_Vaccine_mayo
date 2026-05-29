@@ -82,7 +82,12 @@ export class SheetsBaselineRepository implements BaselineRepository {
   }
 
   saveBatch(batch: BaselineBatch): void {
-    this.batchSheet().appendRow(baselineBatchToRow(batch));
+    const sheet = this.batchSheet();
+    if (this.findBatchRowNumber(sheet, batch.batchId)) {
+      throw new Error("Duplicate baseline batch");
+    }
+
+    sheet.appendRow(baselineBatchToRow(batch));
   }
 
   updateBatch(batch: BaselineBatch): void {
@@ -135,6 +140,10 @@ export class SheetsBaselineRepository implements BaselineRepository {
       throw new Error("Baseline tables are not provisioned");
     }
 
+    if (this.hasRegistryRows(registry, batchId)) {
+      return;
+    }
+
     const lastRow = staging.getLastRow();
     const stagedRows = lastRow < 2 ? [] : staging.getRange(2, 1, lastRow - 1, 4).getValues();
     const approvedRows = approvedRegistryRows(batchId, stagedRows);
@@ -161,8 +170,8 @@ export class SheetsBaselineRepository implements BaselineRepository {
       sheet
         .getRange(2, 1, lastRow - 1, 3)
         .getValues()
-        .filter((row) => String(row[2]).toUpperCase() === "TRUE")
-        .map((row) => String(row[0])),
+        .filter((row) => String(row[2]).trim().toUpperCase() === "TRUE")
+        .map((row) => String(row[0]).trim()),
     );
   }
 
@@ -190,5 +199,17 @@ export class SheetsBaselineRepository implements BaselineRepository {
     const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
     const index = ids.findIndex((row) => String(row[0]) === batchId);
     return index === -1 ? undefined : index + 2;
+  }
+
+  private hasRegistryRows(sheet: GoogleAppsScript.Spreadsheet.Sheet, batchId: string): boolean {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return false;
+    }
+
+    return sheet
+      .getRange(2, 1, lastRow - 1, 1)
+      .getValues()
+      .some((row) => String(row[0]) === batchId);
   }
 }
