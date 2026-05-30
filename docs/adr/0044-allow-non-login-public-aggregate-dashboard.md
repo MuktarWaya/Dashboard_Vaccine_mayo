@@ -1,0 +1,3 @@
+# Allow non-login public aggregate dashboard
+
+District leaders need to open the Dashboard Vaccine summary quickly without account friction, while operational child-level and worker-level data must remain protected. The system will provide a non-login public aggregate dashboard URL with no token in the first release, but the endpoint will return only whitelisted district-level and service-unit-level aggregate data and will not expose child identifiers, names, addresses, worker names, row-level issues, raw records, or operational actions. Staff workflows, drill-downs, imports, approvals, confirmations, exports, and audit views remain behind role-controlled login.
