@@ -1,4 +1,5 @@
 import type { BaselineBatch } from "../domain/baseline";
+import type { PublicDashboardServiceUnit } from "../domain/publicDashboard";
 import type { BaselineActor } from "../features/baseline/baselineAccess";
 import type { BaselineRepository } from "../features/baseline/baselineService";
 
@@ -187,6 +188,28 @@ export class SheetsBaselineRepository implements BaselineRepository {
         .filter((row) => String(row[2]).trim().toUpperCase() === "TRUE")
         .map((row) => String(row[0]).trim()),
     );
+  }
+
+  listActiveServiceUnits(): PublicDashboardServiceUnit[] {
+    const sheet = this.spreadsheet.getSheetByName(TABLES.CFG_SERVICE_UNITS);
+    if (!sheet) {
+      throw new Error("Service unit configuration is missing");
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return [];
+    }
+
+    return sheet
+      .getRange(2, 1, lastRow - 1, 3)
+      .getValues()
+      .filter((row) => String(row[2]).trim().toUpperCase() === "TRUE")
+      .map((row) => ({
+        serviceUnitCode: String(row[0]).trim(),
+        serviceUnitName: String(row[1]).trim(),
+      }))
+      .filter((unit) => unit.serviceUnitCode && unit.serviceUnitName);
   }
 
   getAcceptedBaselineCids(): Set<string> {

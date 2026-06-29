@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary-50: 240 100% 97%;
+    --color-primary-100: 142 71% 95%;
+    --color-primary-200: 142 76% 86%;
+    --color-primary-300: 142 76% 72%;
+    --color-primary-400: 142 76% 58%;
+    --color-primary-500: 142 76% 36%;
+    --color-primary-600: 142 76% 28%;
+    --color-primary-700: 142 76% 20%;
+    --color-primary-800: 142 76% 15%;
+    --color-primary-900: 142 76% 10%;
+  }
+
+  * {
+    @apply border-surface-200;
+  }
+
+  body {
+    @apply bg-surface-50 text-surface-900;
+    font-feature-settings: 'liga' 1, 'calt' 1;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-400;
+  }
+}
+
+@layer components {
+  /* Elegant Card Component */
+  .card {
+    @apply bg-white rounded-elegant shadow-elegant-md border border-surface-200;
+  }
+
+  .card-elevated {
+    @apply bg-white rounded-elegant-lg shadow-elegant-lg border border-surface-200;
+  }
+
+  .card-premium {
+    @apply bg-white rounded-elegant-xl shadow-premium border border-surface-200;
+  }
+
+  /* Elegant Button Component */
+  .btn {
+    @apply px-4 py-2 rounded-elegant font-medium transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 active:scale-95;
+    @apply shadow-elegant-sm hover:shadow-elegant-md;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-100 text-surface-700 hover:bg-surface-200;
+    @apply border border-surface-300;
+  }
+
+  .btn-accent {
+    @apply bg-accent-gold text-white hover:bg-accent-goldDark;
+    @apply shadow-gold-glow hover:shadow-elegant-md;
+  }
+
+  /* Status Badge */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-status-success/10 text-status-success;
+  }
+
+  .badge-warning {
+    @apply bg-status-warning/10 text-status-warning;
+  }
+
+  .badge-error {
+    @apply bg-status-error/10 text-status-error;
+  }
+
+  .badge-pending {
+    @apply bg-status-pending/10 text-status-pending;
+  }
+
+  /* Table Styles */
+  .table-elegant {
+    @apply w-full border-collapse;
+  }
+
+  .table-elegant th {
+    @apply bg-surface-50 text-surface-600 font-semibold text-left px-4 py-3 text-label-md border-b border-surface-200;
+  }
+
+  .table-elegant td {
+    @apply px-4 py-3 text-body-md border-b border-surface-100;
+  }
+
+  .table-elegant tr:hover {
+    @apply bg-surface-50/50;
+  }
+
+  /* Input Styles */
+  .input-elegant {
+    @apply w-full px-3 py-2 rounded-elegant border border-surface-300 bg-white;
+    @apply text-body-md text-surface-900 placeholder:text-surface-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500;
+    @apply transition-all duration-200;
+  }
+
+  /* Loading Shimmer */
+  .shimmer {
+    @apply relative overflow-hidden;
+    background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.03) 0%,
+      rgba(0, 0, 0, 0.08) 50%,
+      rgba(0, 0, 0, 0.03) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+@layer utilities {
+  /* Text Gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-800;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-gold to-accent-goldDark;
+  }
+
+  /* Glass Effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-surface-900/80 backdrop-blur-md border border-white/10;
+  }
+
+  /* Container */
+  .container-elegant {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-narrow {
+    @apply max-w-5xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Animation Delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+}

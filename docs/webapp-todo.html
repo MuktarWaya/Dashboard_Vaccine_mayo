@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Todo - Dashboard Vaccine อำเภอมายอ</title>
+  <style>
+    :root {
+      --green: #14422d;
+      --green-soft: #e8f4ec;
+      --maroon: #9b4145;
+      --maroon-soft: #fde7e7;
+      --gold: #c5a059;
+      --gold-soft: #fff8e6;
+      --blue: #1d4ed8;
+      --blue-soft: #eff6ff;
+      --ink: #1a1c1a;
+      --muted: #59615b;
+      --line: #d1d5db;
+      --surface: #f9faf6;
+      --card: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: "Noto Sans Thai", "Noto Sans", Tahoma, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .page { width: min(1080px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 56px; }
+    header {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(20, 66, 45, 0.10), rgba(197, 160, 89, 0.10)), var(--card);
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 6px; color: var(--green); font-size: clamp(26px, 5vw, 35px); }
+    h2 { margin: 32px 0 13px; color: var(--green); font-size: 21px; border-bottom: 2px solid var(--green-soft); padding-bottom: 7px; }
+    h3 { margin-bottom: 5px; font-size: 16px; }
+    .subtitle { margin: 0; color: var(--muted); }
+    .nav { margin-top: 16px; }
+    .nav a {
+      display: inline-block;
+      padding: 7px 12px;
+      border: 1px solid var(--green);
+      border-radius: 999px;
+      color: var(--green);
+      background: white;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .summary div {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+    .summary strong { display: block; color: var(--green); font-size: 19px; }
+    .summary span { color: var(--muted); font-size: 12px; }
+
+    .todo {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) auto;
+      gap: 11px;
+      align-items: start;
+      padding: 15px 16px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--card);
+      box-shadow: 0 2px 6px rgba(20, 66, 45, 0.05);
+    }
+    .todo + .todo { margin-top: 9px; }
+    .box {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      border: 2px solid var(--green);
+      border-radius: 4px;
+      background: white;
+    }
+    .todo p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .critical { color: #991b1b; background: var(--maroon-soft); }
+    .required { color: #854d0e; background: var(--gold-soft); }
+    .planned { color: #1e40af; background: var(--blue-soft); }
+    .later { color: var(--green); background: var(--green-soft); }
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: #1e40af;
+      background: var(--blue-soft);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.9em;
+      overflow-wrap: anywhere;
+    }
+    .gate {
+      margin: 12px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--gold);
+      border-radius: 7px;
+      color: #7c4a03;
+      background: var(--gold-soft);
+    }
+    footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+    @media (max-width: 700px) {
+      .summary { grid-template-columns: 1fr; }
+      .todo { grid-template-columns: 24px minmax(0, 1fr); }
+      .todo .badge { grid-column: 2; justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>Todo - Dashboard Vaccine</h1>
+      <p class="subtitle">รายการงานจากสถานะ repository ณ วันที่ 12 มิถุนายน 2026 เรียงจากสิ่งที่ต้องทำก่อน deploy ไปยัง roadmap ระยะถัดไป</p>
+      <nav class="nav"><a href="webapp-overview.html">กลับไปหน้า Overview</a></nav>
+      <div class="summary">
+        <div><strong>P0</strong><span>ซ่อมและยืนยัน build ก่อน deploy</span></div>
+        <div><strong>P1</strong><span>ตั้งค่าและ dry run ระบบ baseline</span></div>
+        <div><strong>P2+</strong><span>พัฒนา monthly workflow และโมดูลถัดไป</span></div>
+      </div>
+    </header>
+
+    <h2>P0 - ต้องเสร็จก่อน Deploy รอบใหม่</h2>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>ติดตั้ง dependencies ใหม่ให้สมบูรณ์</h3>
+        <p>โฟลเดอร์ <code>node_modules</code> ปัจจุบันขาด Vitest executable และ package metadata ของ esbuild ควรติดตั้งจาก <code>package-lock.json</code> แล้วตรวจว่า <code>node_modules/.bin</code> ถูกสร้างครบ</p>
+      </div>
+      <span class="badge critical">P0</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>รันชุดทดสอบทั้งหมด</h3>
+        <p>รัน <code>npm test</code> และแก้เฉพาะความล้มเหลวจริงจนทุก test ผ่าน รวม validation, access control, repository, workflow, routing และ privacy guard</p>
+      </div>
+      <span class="badge critical">P0</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Build Public และตรวจ manifest</h3>
+        <p>รัน <code>npm run build</code> แล้วตรวจว่า <code>dist/appsscript.json</code> เป็น <code>USER_DEPLOYING / ANYONE_ANONYMOUS</code> และมี artifact ครบ 4 ไฟล์</p>
+      </div>
+      <span class="badge critical">P0</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Build Staff และตรวจ manifest</h3>
+        <p>รัน <code>npm run build:staff</code> แล้วตรวจว่า <code>dist/appsscript.json</code> เป็น <code>USER_ACCESSING / DOMAIN</code> ก่อน push ไป Staff project</p>
+      </div>
+      <span class="badge critical">P0</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>ยืนยัน privacy ของ Public endpoint</h3>
+        <p>ตรวจผลจาก <code>getPublicDashboardModel()</code> ว่าไม่มี CID, ชื่อเด็ก, วันเกิด, ที่อยู่, ผู้ปฏิบัติงาน, raw record, issue รายแถว หรือข้อมูล audit</p>
+      </div>
+      <span class="badge critical">P0</span>
+    </article>
+
+    <h2>P1 - ตั้งค่าระบบและ Dry Run</h2>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>ยืนยัน Spreadsheet กลางและสิทธิ์เข้าถึง</h3>
+        <p>ตรวจ Spreadsheet ID ที่ใช้จริง ตั้ง Script Property ในทั้งสอง project หากไม่ใช้ค่า default และยืนยันว่าผู้ deploy กับ staff users มีสิทธิ์ตามรูปแบบ execute-as</p>
+      </div>
+      <span class="badge required">P1</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Provision ตาราง baseline</h3>
+        <p>รัน <code>provisionBaselineTables()</code> ครั้งแรก แล้วตรวจหัวตารางทั้ง <code>CFG_SERVICE_UNITS</code>, <code>CFG_BASELINE_USERS</code>, <code>BASELINE_BATCHES</code>, <code>BASELINE_STAGING</code> และ <code>CHILD_REGISTRY</code></p>
+      </div>
+      <span class="badge required">P1</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>กรอกหน่วยบริการ 14 แห่ง</h3>
+        <p>กรอกรหัส 5 หลัก ชื่อทางการ และ <code>active = TRUE</code> ใน <code>CFG_SERVICE_UNITS</code> พร้อมตรวจชื่อและรหัสกับรายการที่อนุมัติ</p>
+      </div>
+      <span class="badge required">P1</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>กำหนดผู้ใช้ baseline จริง</h3>
+        <p>กรอกอีเมล <code>DISTRICT_APPROVER</code> และ <code>UNIT_CONFIRMER</code> พร้อม service-unit scope ใน <code>CFG_BASELINE_USERS</code> และตรวจว่าไม่มีอีเมล active ซ้ำ</p>
+      </div>
+      <span class="badge required">P1</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>ทำ dry run หนึ่งหน่วยบริการ</h3>
+        <p>ทดสอบข้อมูลจริงตาม <code>docs/runbooks/baseline-dry-run.md</code>: invalid data ต้องถูก reject, VALIDATED ยังไม่เข้า registry, Approve ต้อง promote เข้า registry, Confirm ต้องเปลี่ยน coverage เป็น 1 จาก 14</p>
+      </div>
+      <span class="badge required">P1</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>ตรวจสิทธิ์ด้วยบัญชีจริง</h3>
+        <p>ยืนยันว่า district approver มองเห็นทุก batch, unit confirmer เห็นเฉพาะหน่วยตน, wrong-unit confirmer ถูกปฏิเสธ และ public URL ไม่สามารถใช้ทำ staff action ได้</p>
+      </div>
+      <span class="badge required">P1</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Deploy และบันทึก Web App URLs</h3>
+        <p>หลัง verification ผ่าน ให้ push และสร้าง deployment แยก Public/Staff จากนั้นบันทึก URL เวอร์ชันที่ใช้งานจริงและทดสอบจากอุปกรณ์ desktop/mobile</p>
+      </div>
+      <span class="badge required">P1</span>
+    </article>
+
+    <div class="gate">
+      เกณฑ์ผ่าน P1: import ที่ถูกต้องทำงานครบทั้ง Stage → Approve/Registry → Confirm, coverage ถูกต้อง, role scope ถูกต้อง, Public ไม่มีข้อมูลรายบุคคล และมีหลักฐาน actor/timestamp ใน batch
+    </div>
+
+    <h2>P2 - Core Monthly Workflow</h2>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>ออกแบบและสร้าง schema รายเดือน</h3>
+        <p>เพิ่มโครงสร้างสำหรับสถานะวัคซีนรายเดือน, reporting month, carry-forward และ monthly confirmation โดยยึด ADR 0015, 0018 และ 0019</p>
+      </div>
+      <span class="badge planned">P2</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>สร้าง pending verification workflow</h3>
+        <p>แยกข้อค้นพบภาคสนามออกจากสถานะทางการ และให้หน่วยบริการรับรองก่อนเปลี่ยน official vaccine status</p>
+      </div>
+      <span class="badge planned">P2</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Submission, close และ lock รอบเดือน</h3>
+        <p>รองรับการยืนยันส่งข้อมูลรายหน่วย การปิดรายงานระดับอำเภอแม้ส่งไม่ครบ การแสดง incompleteness และการควบคุมแก้ย้อนหลัง</p>
+      </div>
+      <span class="badge planned">P2</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Audit log แกนหลัก</h3>
+        <p>บันทึกผู้กระทำ เวลา ค่าเดิม ค่าใหม่ เหตุผล และการอนุมัติสำหรับการเปลี่ยนสถานะหรือแก้ข้อมูลย้อนหลัง</p>
+      </div>
+      <span class="badge planned">P2</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>เปิดข้อมูลจริงใน Vaccine Progress dashboard</h3>
+        <p>เมื่อ monthly aggregate backend พร้อม จึงเปลี่ยนจาก <code>NOT_READY</code> เป็นข้อมูลสรุประดับอำเภอ/หน่วยบริการและ movement ระหว่างเดือน โดยไม่เปิดข้อมูลรายเด็ก</p>
+      </div>
+      <span class="badge planned">P2</span>
+    </article>
+
+    <h2>P3 - โมดูลปฏิบัติการเพิ่มเติม</h2>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Field-worker mobile follow-up</h3>
+        <p>บัญชีรายบุคคล, session จำกัดเวลา, ข้อมูลเด็กเท่าที่จำเป็น, controlled reasons, edit window และ central event log</p>
+      </div>
+      <span class="badge later">P3</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>กิจกรรมบริการเชิงรุก</h3>
+        <p>กิจกรรมตามแผน, ผู้รับผิดชอบ, กำหนดปิดกิจกรรม, ข้อยกเว้น และผลลัพธ์ aggregate</p>
+      </div>
+      <span class="badge later">P3</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>วัคซีนทางเลือก</h3>
+        <p>บันทึก consent status และ service decision โดยไม่เก็บเอกสารต้นฉบับ พร้อม funnel aggregate และ export สำหรับ อบจ.</p>
+      </div>
+      <span class="badge later">P3</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Notification และ escalation</h3>
+        <p>แจ้งเตือนงานค้างระดับหน่วยและยกระดับไปยังอำเภอตาม ADR 0040</p>
+      </div>
+      <span class="badge later">P3</span>
+    </article>
+
+    <h2>P4 - ความมั่นคงและการดำเนินงานระยะยาว</h2>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Backup และ restore</h3>
+        <p>กำหนด backup point ก่อนเปลี่ยนโครงสร้างและก่อนปิดเดือน ทดสอบกู้คืน และบันทึกหลักฐาน restoration ตาม ADR 0043</p>
+      </div>
+      <span class="badge later">P4</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Offline/outage fallback</h3>
+        <p>รองรับการบันทึกสำรองในช่วงระบบล่ม พร้อมการนำกลับเข้า การตรวจซ้ำ และ audit โดยไม่ทำให้รายงานดูครบเกินจริง</p>
+      </div>
+      <span class="badge later">P4</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Security incident workflow</h3>
+        <p>กำหนดการบันทึก ควบคุมผลกระทบ เปลี่ยนสิทธิ์ ตรวจสอบ และปิด incident ตาม ADR 0041</p>
+      </div>
+      <span class="badge later">P4</span>
+    </article>
+    <article class="todo">
+      <span class="box" aria-hidden="true"></span>
+      <div>
+        <h3>Project close และ retention</h3>
+        <p>กำหนดสถานะหลังสิ้นสุดโครงการ การปิดการแก้ไข การเก็บรักษาข้อมูล และผู้รับผิดชอบระบบระยะยาว</p>
+      </div>
+      <span class="badge later">P4</span>
+    </article>
+
+    <footer>
+      Todo นี้เป็นเอกสารสถานะ ไม่ได้เชื่อมกับ issue tracker และ checkbox ไม่บันทึกค่าเมื่อเปิดใหม่
+    </footer>
+  </main>
+</body>
+</html>

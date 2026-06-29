@@ -1,7 +1,15 @@
 .worktrees/
 .superpowers/
 node_modules/
+node_modules.broken-*/
 dist/
 .clasp.json
+.clasp.public.json
+.clasp.staff.json
 *.csv
 *.gsheet
+outputs/
+scripts/__pycache__/
+*.pyc
+*.zip
+stitch_*/

@@ -204,6 +204,16 @@ describe("SheetsBaselineRepository", () => {
     expect(repository.getApprovedServiceUnitCodes()).toEqual(new Set(["95001"]));
   });
 
+  it("lists active service units for public aggregate reporting", () => {
+    const { repository, spreadsheet } = fakeRepository();
+    spreadsheet.getSheetByName(TABLES.CFG_SERVICE_UNITS)?.appendRow([" 95001 ", " รพ.สต.มายอ ", " true "]);
+    spreadsheet.getSheetByName(TABLES.CFG_SERVICE_UNITS)?.appendRow(["95002", "Inactive", "false"]);
+
+    expect(repository.listActiveServiceUnits()).toEqual([
+      { serviceUnitCode: "95001", serviceUnitName: "รพ.สต.มายอ" },
+    ]);
+  });
+
   it("returns CIDs only from staged or registry rows attached to non-rejected batches", () => {
     const { repository } = fakeRepository();
     repository.saveBatch({ ...approvedBatch("validated"), state: "VALIDATED" });

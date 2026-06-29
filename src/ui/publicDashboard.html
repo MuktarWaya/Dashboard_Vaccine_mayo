@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard Vaccine - อำเภอมายอ</title>
+    <style>
+      :root {
+        --surface: #f9faf6;
+        --surface-warm: #f9f8f6;
+        --surface-low: #f3f4f0;
+        --surface-container: #edeeea;
+        --surface-card: #ffffff;
+        --ink: #1a1c1a;
+        --muted: #414943;
+        --border: #d1d5db;
+        --outline: #717973;
+        --primary: #14422d;
+        --primary-container: #2d5a43;
+        --secondary: #9b4145;
+        --tertiary: #5b2d2f;
+        --gold: #c5a059;
+        --warning: #d97706;
+        --danger: #ba1a1a;
+        --success-bg: #e8f4ec;
+        --warning-bg: #fff4de;
+        --danger-bg: #fde7e7;
+        --info-bg: #eef5f0;
+        --radius: 8px;
+        --shadow: 0 4px 8px rgba(20, 66, 45, 0.08);
+        --shadow-soft: 0 2px 6px rgba(20, 66, 45, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, #eef3ee 0, var(--surface-warm) 260px),
+          var(--surface-warm);
+        color: var(--ink);
+        font-family: "Noto Sans Thai", "Noto Sans", Tahoma, sans-serif;
+        font-size: 16px;
+        line-height: 1.55;
+      }
+
+      button,
+      a {
+        font: inherit;
+      }
+
+      .app-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(249, 250, 246, 0.92);
+        border-bottom: 1px solid rgba(209, 213, 219, 0.82);
+        backdrop-filter: saturate(1.1) blur(8px);
+      }
+
+      .header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        width: min(1240px, 100%);
+        margin: 0 auto;
+        padding: 16px 22px;
+      }
+
+      .brand {
+        min-width: 0;
+      }
+
+      .brand-title {
+        margin: 0;
+        color: var(--primary);
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+
+      .brand-meta {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .staff-link {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 8px 14px;
+        border: 1px solid var(--secondary);
+        border-radius: 4px;
+        color: var(--secondary);
+        background: var(--surface-card);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .staff-link:hover,
+      .staff-link:focus {
+        outline: 2px solid rgba(155, 65, 69, 0.28);
+        outline-offset: 2px;
+      }
+
+      main {
+        width: min(1240px, 100%);
+        margin: 0 auto;
+        padding: 22px;
+      }
+
+      .overview-band {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 18px;
+        border: 1px solid rgba(192, 201, 193, 0.86);
+        border-radius: 10px;
+        background:
+          linear-gradient(135deg, rgba(20, 66, 45, 0.08), rgba(197, 160, 89, 0.10)),
+          var(--surface-card);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .overview-title {
+        margin: 0;
+        color: var(--primary);
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.3;
+      }
+
+      .overview-copy {
+        max-width: 760px;
+        margin: 4px 0 0;
+        color: var(--muted);
+      }
+
+      .privacy-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 36px;
+        padding: 7px 11px;
+        border: 1px solid rgba(20, 66, 45, 0.22);
+        border-radius: 999px;
+        color: var(--primary);
+        background: rgba(255, 255, 255, 0.74);
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-card);
+        box-shadow: var(--shadow-soft);
+      }
+
+      .tab-button {
+        min-width: 0;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        padding: 14px 16px 12px;
+        color: var(--muted);
+        background: transparent;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.35;
+        white-space: normal;
+      }
+
+      .tab-button[aria-selected="true"] {
+        color: var(--secondary);
+        border-bottom-color: var(--secondary);
+        background: linear-gradient(180deg, #ffffff, var(--surface-low));
+      }
+
+      .panel {
+        display: none;
+        margin-top: 18px;
+      }
+
+      .panel.active {
+        display: block;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-card);
+        box-shadow: var(--shadow);
+      }
+
+      .metric-card {
+        position: relative;
+        min-height: 132px;
+        padding: 18px;
+        overflow: hidden;
+      }
+
+      .metric-card::after {
+        content: "";
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: rgba(20, 66, 45, 0.06);
+      }
+
+      .metric-card.highlight::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 4px;
+        background: var(--gold);
+      }
+
+      .metric-label {
+        margin: 0 0 8px;
+        color: var(--secondary);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .metric-value {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        color: var(--primary);
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.15;
+      }
+
+      .metric-unit {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .metric-note {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .dashboard-frame {
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .frame-title {
+        margin: 0 0 6px;
+        color: var(--primary);
+        font-size: 24px;
+        line-height: 1.35;
+      }
+
+      .frame-copy {
+        max-width: 760px;
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .empty-state {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+        gap: 24px;
+        align-items: center;
+        min-height: 280px;
+        margin-top: 20px;
+        padding: 28px;
+        border: 1px dashed #c0c9c1;
+        border-radius: var(--radius);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(243, 244, 240, 0.86)),
+          var(--surface-low);
+      }
+
+      .empty-icon {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        margin: 0 0 14px;
+        border-radius: 999px;
+        background: var(--info-bg);
+        color: var(--primary);
+        font-weight: 800;
+      }
+
+      .empty-title {
+        margin: 0 0 6px;
+        font-size: 20px;
+        color: var(--ink);
+      }
+
+      .empty-copy {
+        max-width: 620px;
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .empty-checks {
+        display: grid;
+        gap: 8px;
+        margin-top: 18px;
+        padding: 0;
+        list-style: none;
+      }
+
+      .empty-checks li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .empty-checks li::before {
+        content: "";
+        flex: 0 0 auto;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--gold);
+      }
+
+      .preview-panel {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid rgba(113, 121, 115, 0.18);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .preview-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .preview-row {
+        display: grid;
+        grid-template-columns: 68px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+      }
+
+      .preview-unit {
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .preview-bar {
+        height: 12px;
+        border-radius: 999px;
+        background: var(--surface-container);
+        overflow: hidden;
+      }
+
+      .preview-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--primary-container), var(--gold));
+        opacity: 0.32;
+      }
+
+      .table-card {
+        overflow: hidden;
+      }
+
+      .table-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 17px 18px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(180deg, #ffffff, var(--surface-low));
+      }
+
+      .table-title {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        background: var(--surface-low);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .unit-name {
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .unit-code {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        margin-right: 6px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .status.confirmed {
+        color: var(--primary);
+        background: var(--success-bg);
+      }
+
+      .status.pending {
+        color: var(--warning);
+        background: var(--warning-bg);
+      }
+
+      .status.followup {
+        color: var(--secondary);
+        background: var(--danger-bg);
+      }
+
+      .status.not-started {
+        color: var(--outline);
+        background: var(--surface-container);
+      }
+
+      .message {
+        min-height: 24px;
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .error {
+        color: var(--danger);
+      }
+
+      .loading-row {
+        padding: 22px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 860px) {
+        .overview-band {
+          grid-template-columns: 1fr;
+        }
+
+        .summary-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .empty-state {
+          grid-template-columns: 1fr;
+        }
+
+        table,
+        thead,
+        tbody,
+        tr,
+        th,
+        td {
+          display: block;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tbody {
+          display: grid;
+          gap: 10px;
+          padding: 12px;
+          background: var(--surface);
+        }
+
+        tbody tr {
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          background: var(--surface-card);
+          box-shadow: var(--shadow);
+        }
+
+        td {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          border-bottom: 1px solid var(--border);
+        }
+
+        td::before {
+          content: attr(data-label);
+          flex: 0 0 42%;
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        td:last-child {
+          border-bottom: 0;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .header-inner {
+          align-items: flex-start;
+          padding: 12px 14px;
+        }
+
+        .brand-title {
+          font-size: 17px;
+        }
+
+        .staff-link {
+          min-height: 36px;
+          padding: 7px 9px;
+          font-size: 12px;
+        }
+
+        main {
+          padding: 14px;
+        }
+
+        .overview-band {
+          padding: 14px;
+        }
+
+        .overview-title {
+          font-size: 19px;
+        }
+
+        .privacy-badge {
+          width: 100%;
+          justify-content: center;
+          white-space: normal;
+        }
+
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metric-value {
+          font-size: 28px;
+        }
+
+        .dashboard-frame {
+          padding: 16px;
+        }
+
+        .empty-state {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand">
+          <h1 class="brand-title">Dashboard Vaccine อำเภอมายอ</h1>
+          <div class="brand-meta" id="lastUpdated">กำลังโหลดข้อมูลล่าสุด...</div>
+        </div>
+        <a class="staff-link" href="?page=staff">เข้าสู่ระบบเจ้าหน้าที่</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="overview-band" aria-label="Dashboard overview">
+        <div>
+          <h2 class="overview-title">ภาพรวมวัคซีนเด็กระดับอำเภอ</h2>
+          <p class="overview-copy">
+            เปิดดูข้อมูลรวมได้รวดเร็ว แยกงานติดตามคุณภาพข้อมูลออกจากข้อมูลรายเดือนที่ยังอยู่ระหว่างเตรียมพร้อม
+          </p>
+        </div>
+        <div class="privacy-badge" aria-label="Aggregate only public dashboard">ข้อมูลรวมเท่านั้น</div>
+      </section>
+
+      <nav class="tabs" aria-label="Dashboard tabs">
+        <button class="tab-button" type="button" data-tab="vaccineProgress" aria-selected="true">
+          ความก้าวหน้าวัคซีน
+        </button>
+        <button class="tab-button" type="button" data-tab="dataQuality" aria-selected="false">
+          ติดตามคุณภาพข้อมูล
+        </button>
+      </nav>
+
+      <section class="panel active" id="panel-vaccineProgress">
+        <div class="card dashboard-frame">
+          <h2 class="frame-title">ความก้าวหน้าวัคซีนทั้งอำเภอ</h2>
+          <p class="frame-copy">
+            หน้านี้จะแสดงเฉพาะข้อมูลภาพรวมระดับอำเภอและระดับหน่วยบริการ เมื่อข้อมูลรายเดือนผ่านการเตรียมพร้อมแล้ว
+          </p>
+          <div class="empty-state" id="vaccineEmptyState">
+            <div>
+              <div class="empty-icon" aria-hidden="true">!</div>
+              <h3 class="empty-title">กำลังเตรียมข้อมูลรายเดือน</h3>
+              <p class="empty-copy">
+                ระบบยังไม่แสดงตัวเลขความก้าวหน้าวัคซีนจนกว่าข้อมูล aggregate รายเดือนจะพร้อม เพื่อลดความเสี่ยงจากการแสดงค่าจำลองหรือข้อมูลที่ยังไม่ยืนยัน
+              </p>
+              <ul class="empty-checks" aria-label="Vaccine progress readiness checks">
+                <li>รอ schema ข้อมูลรายเดือนที่ยืนยันแล้ว</li>
+                <li>แสดงเฉพาะผลรวมระดับอำเภอและหน่วยบริการ</li>
+                <li>ไม่เปิดเผยข้อมูลรายเด็กหรือรายละเอียดปฏิบัติการ</li>
+              </ul>
+            </div>
+            <div class="preview-panel" aria-hidden="true">
+              <div class="preview-label">
+                <span>รูปแบบการแสดงผลเมื่อข้อมูลพร้อม</span>
+                <span>aggregate</span>
+              </div>
+              <div class="preview-row">
+                <span class="preview-unit">อำเภอ</span>
+                <span class="preview-bar"><span class="preview-fill" style="width: 72%"></span></span>
+              </div>
+              <div class="preview-row">
+                <span class="preview-unit">หน่วย A</span>
+                <span class="preview-bar"><span class="preview-fill" style="width: 58%"></span></span>
+              </div>
+              <div class="preview-row">
+                <span class="preview-unit">หน่วย B</span>
+                <span class="preview-bar"><span class="preview-fill" style="width: 46%"></span></span>
+              </div>
+              <div class="preview-row">
+                <span class="preview-unit">หน่วย C</span>
+                <span class="preview-bar"><span class="preview-fill" style="width: 64%"></span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-dataQuality">
+        <div class="summary-grid" aria-label="Data quality summary">
+          <article class="card metric-card highlight">
+            <p class="metric-label">ยืนยันทะเบียนตั้งต้น</p>
+            <div class="metric-value"><span id="confirmedUnits">-</span><span class="metric-unit">หน่วย</span></div>
+            <p class="metric-note" id="confirmedUnitsNote">จาก 14 หน่วยบริการ</p>
+          </article>
+          <article class="card metric-card">
+            <p class="metric-label">เด็กที่ยืนยันแล้ว</p>
+            <div class="metric-value"><span id="confirmedChildren">-</span><span class="metric-unit">คน</span></div>
+            <p class="metric-note">นับจากหน่วยบริการที่ยืนยันแล้ว</p>
+          </article>
+          <article class="card metric-card">
+            <p class="metric-label">เด็กชั่วคราว</p>
+            <div class="metric-value"><span id="provisionalChildren">-</span><span class="metric-unit">คน</span></div>
+            <p class="metric-note">รอการยืนยันหรือจัดการต่อ</p>
+          </article>
+          <article class="card metric-card">
+            <p class="metric-label">หน่วยที่ต้องติดตาม</p>
+            <div class="metric-value"><span id="unitsNeedingFollowUp">-</span><span class="metric-unit">แห่ง</span></div>
+            <p class="metric-note">ยังไม่ยืนยันทะเบียนตั้งต้น</p>
+          </article>
+        </div>
+
+        <section class="card table-card">
+          <div class="table-header">
+            <h2 class="table-title">ข้อมูลระดับหน่วยบริการ</h2>
+            <span class="brand-meta">aggregate only</span>
+          </div>
+          <div class="loading-row" id="tableLoading">กำลังโหลดข้อมูลคุณภาพข้อมูล...</div>
+          <table id="serviceUnitTable" hidden>
+            <thead>
+              <tr>
+                <th>หน่วยบริการ</th>
+                <th>สถานะ</th>
+                <th>เด็กยืนยันแล้ว</th>
+                <th>เด็กชั่วคราว</th>
+                <th>ประเด็นรอตรวจ</th>
+                <th>อัปเดตล่าสุด</th>
+              </tr>
+            </thead>
+            <tbody id="serviceUnitRows"></tbody>
+          </table>
+        </section>
+      </section>
+
+      <p class="message" id="message" role="status"></p>
+    </main>
+
+    <script>
+      function text(value) {
+        return value == null || value === "" ? "-" : String(value);
+      }
+
+      function numberText(value) {
+        var number = Number(value || 0);
+        return number.toLocaleString("th-TH");
+      }
+
+      function dateTimeText(value) {
+        if (!value) {
+          return "-";
+        }
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return text(value);
+        }
+
+        return date.toLocaleString("th-TH", {
+          dateStyle: "medium",
+          timeStyle: "short",
+          hour12: false,
+          timeZone: "Asia/Bangkok",
+        });
+      }
+
+      function setMessage(value, isError) {
+        var message = document.getElementById("message");
+        message.textContent = value || "";
+        message.className = isError ? "message error" : "message";
+      }
+
+      function statusClass(status) {
+        if (status === "ยืนยันแล้ว") return "confirmed";
+        if (status === "รอยืนยัน") return "pending";
+        if (status === "ต้องติดตาม") return "followup";
+        return "not-started";
+      }
+
+      function renderModel(model) {
+        var quality = model.dataQuality || {};
+        document.getElementById("lastUpdated").textContent = "ข้อมูลล่าสุด: " + dateTimeText(model.lastUpdatedAt);
+        document.getElementById("confirmedUnits").textContent = numberText(quality.confirmedUnits);
+        document.getElementById("confirmedUnitsNote").textContent =
+          "จาก " + numberText(quality.totalUnits) + " หน่วยบริการ";
+        document.getElementById("confirmedChildren").textContent = numberText(quality.confirmedChildren);
+        document.getElementById("provisionalChildren").textContent = numberText(quality.provisionalChildren);
+        document.getElementById("unitsNeedingFollowUp").textContent = numberText(quality.unitsNeedingFollowUp);
+
+        var vaccineMessage = model.vaccineProgress && model.vaccineProgress.message
+          ? model.vaccineProgress.message
+          : "กำลังเตรียมข้อมูลรายเดือน";
+        document.querySelector("#vaccineEmptyState .empty-title").textContent = vaccineMessage;
+
+        var rows = document.getElementById("serviceUnitRows");
+        rows.textContent = "";
+        (quality.serviceUnits || []).forEach(function (unit) {
+          var row = document.createElement("tr");
+          row.innerHTML =
+            '<td data-label="หน่วยบริการ"><div class="unit-name"></div><div class="unit-code"></div></td>' +
+            '<td data-label="สถานะ"><span class="status"></span></td>' +
+            '<td data-label="เด็กยืนยันแล้ว"></td>' +
+            '<td data-label="เด็กชั่วคราว"></td>' +
+            '<td data-label="ประเด็นรอตรวจ"></td>' +
+            '<td data-label="อัปเดตล่าสุด"></td>';
+
+          row.querySelector(".unit-name").textContent = text(unit.serviceUnitName);
+          row.querySelector(".unit-code").textContent = "รหัส " + text(unit.serviceUnitCode);
+          var status = row.querySelector(".status");
+          status.textContent = text(unit.baselineStatus);
+          status.className = "status " + statusClass(unit.baselineStatus);
+          row.children[2].textContent = numberText(unit.confirmedChildren);
+          row.children[3].textContent = numberText(unit.provisionalChildren);
+          row.children[4].textContent = numberText(unit.pendingIssueCount);
+          row.children[5].textContent = dateTimeText(unit.lastUpdatedAt);
+          rows.appendChild(row);
+        });
+
+        document.getElementById("tableLoading").hidden = true;
+        document.getElementById("serviceUnitTable").hidden = false;
+        setMessage("", false);
+      }
+
+      function loadDashboard() {
+        if (!window.google || !google.script || !google.script.run) {
+          setMessage("หน้านี้ต้องเปิดผ่าน Google Apps Script Web App เพื่อโหลดข้อมูลจริง", true);
+          return;
+        }
+
+        google.script.run
+          .withFailureHandler(function (error) {
+            document.getElementById("tableLoading").textContent = "โหลดข้อมูลไม่สำเร็จ";
+            setMessage(error && error.message ? error.message : String(error), true);
+          })
+          .withSuccessHandler(renderModel)
+          .getPublicDashboardModel();
+      }
+
+      document.querySelectorAll(".tab-button").forEach(function (button) {
+        button.addEventListener("click", function () {
+          var selected = button.getAttribute("data-tab");
+          document.querySelectorAll(".tab-button").forEach(function (item) {
+            item.setAttribute("aria-selected", item === button ? "true" : "false");
+          });
+          document.querySelectorAll(".panel").forEach(function (panel) {
+            panel.classList.toggle("active", panel.id === "panel-" + selected);
+          });
+        });
+      });
+
+      loadDashboard();
+    </script>
+  </body>
+</html>

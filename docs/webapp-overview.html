@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ภาพรวมโปรเจกต์ Dashboard Vaccine อำเภอมายอ</title>
+  <style>
+    :root {
+      --green: #14422d;
+      --green-2: #2d5a43;
+      --green-soft: #e8f4ec;
+      --maroon: #9b4145;
+      --maroon-soft: #fde7e7;
+      --gold: #c5a059;
+      --gold-soft: #fff8e6;
+      --blue: #1d4ed8;
+      --blue-soft: #eff6ff;
+      --ink: #1a1c1a;
+      --muted: #59615b;
+      --line: #d1d5db;
+      --surface: #f9faf6;
+      --card: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: "Noto Sans Thai", "Noto Sans", Tahoma, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    header {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(20, 66, 45, 0.10), rgba(197, 160, 89, 0.10)),
+        var(--card);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 6px; color: var(--green); font-size: clamp(26px, 5vw, 36px); line-height: 1.25; }
+    h2 { margin: 34px 0 14px; color: var(--green); font-size: 21px; border-bottom: 2px solid var(--green-soft); padding-bottom: 7px; }
+    h3 { margin: 0 0 8px; color: var(--maroon); font-size: 16px; }
+
+    .subtitle { margin: 0; color: var(--muted); }
+    .nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .nav a {
+      padding: 7px 12px;
+      border: 1px solid var(--green);
+      border-radius: 999px;
+      color: var(--green);
+      background: white;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .notice {
+      margin: 12px 0;
+      padding: 14px 16px;
+      border-left: 4px solid;
+      border-radius: 7px;
+    }
+    .notice-ok { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+    .notice-warn { border-color: var(--gold); background: var(--gold-soft); color: #7c4a03; }
+    .notice-info { border-color: var(--blue); background: var(--blue-soft); color: #1e40af; }
+
+    .grid { display: grid; gap: 14px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+      box-shadow: 0 2px 7px rgba(20, 66, 45, 0.06);
+    }
+    .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .done { color: var(--green); background: var(--green-soft); }
+    .partial { color: #854d0e; background: var(--gold-soft); }
+    .future { color: var(--maroon); background: var(--maroon-soft); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--card);
+    }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--green); background: #f3f4f0; font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: #1e40af;
+      background: var(--blue-soft);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.9em;
+      overflow-wrap: anywhere;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .flow-step {
+      padding: 14px;
+      border-top: 4px solid var(--green);
+      border-radius: 8px;
+      background: var(--card);
+      box-shadow: 0 2px 6px rgba(20, 66, 45, 0.06);
+    }
+    .flow-step strong { display: block; color: var(--green); margin-bottom: 4px; }
+    .flow-step small { color: var(--muted); }
+
+    ul { padding-left: 21px; }
+    li + li { margin-top: 5px; }
+
+    footer {
+      margin-top: 42px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 800px) {
+      .grid-2, .grid-3, .flow { grid-template-columns: 1fr; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+      td { border: 0; padding: 5px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>Dashboard Vaccine อำเภอมายอ</h1>
+      <p class="subtitle">ภาพรวมตามโค้ดและไฟล์ใน repository ณ วันที่ 12 มิถุนายน 2026</p>
+      <nav class="nav" aria-label="เอกสารที่เกี่ยวข้อง">
+        <a href="webapp-todo.html">เปิดรายการ Todo</a>
+        <a href="runbooks/public-aggregate-dashboard.md">Public dashboard runbook</a>
+        <a href="runbooks/baseline-dry-run.md">Baseline dry-run runbook</a>
+      </nav>
+    </header>
+
+    <h2>1. สรุปสถานะ</h2>
+    <div class="notice notice-ok">
+      ระบบที่ implement แล้วคือ workflow นำเข้าทะเบียนตั้งต้น พร้อมหน้า public data-quality dashboard และหน้าเจ้าหน้าที่สำหรับ stage, approve และ confirm
+    </div>
+    <div class="notice notice-warn">
+      ยังไม่ถือว่าพร้อม deploy รอบใหม่: วันที่ตรวจล่าสุด <code>npm test</code> และ <code>npm run build</code> รันไม่สำเร็จ เพราะ <code>node_modules</code> ไม่สมบูรณ์และหา executable ของ Vitest กับแพ็กเกจ esbuild ไม่พบ
+    </div>
+    <div class="notice notice-info">
+      โฟลเดอร์ <code>dist/</code> มี artifact เดิมครบ 4 ไฟล์จากวันที่ 2 มิถุนายน 2026 แต่ <code>dist/appsscript.json</code> ปัจจุบันเป็น manifest ฝั่ง Staff จึงห้ามนำไป push ฝั่ง Public โดยไม่ build ใหม่
+    </div>
+
+    <div class="grid grid-3">
+      <section class="card">
+        <h3>ทะเบียนตั้งต้น</h3>
+        <span class="badge done">Implement แล้ว</span>
+        <p>ตรวจข้อมูล, staging, อนุมัติระดับอำเภอ, เขียน child registry และยืนยันโดยหน่วยบริการ</p>
+      </section>
+      <section class="card">
+        <h3>Public dashboard</h3>
+        <span class="badge partial">ทำได้บางส่วน</span>
+        <p>แสดงคุณภาพทะเบียนตั้งต้นแบบ aggregate ได้ ส่วนความก้าวหน้าวัคซีนรายเดือนยังเป็นสถานะไม่พร้อม</p>
+      </section>
+      <section class="card">
+        <h3>ระบบติดตามเต็มรูปแบบ</h3>
+        <span class="badge future">ยังเป็น Roadmap</span>
+        <p>งานรายเดือน, KPI, audit, mobile follow-up, proactive activity และวัคซีนทางเลือกยังไม่มี implementation หลักใน <code>src/</code></p>
+      </section>
+    </div>
+
+    <h2>2. เทคโนโลยีและสถาปัตยกรรม</h2>
+    <div class="grid grid-2">
+      <section class="card">
+        <h3>Application</h3>
+        <ul>
+          <li>TypeScript แบบ strict</li>
+          <li>Bundle ด้วย esbuild เป็น <code>dist/Code.js</code></li>
+          <li>รันบน Google Apps Script V8</li>
+          <li>หน้าเว็บเป็น HTML/CSS/JavaScript และเรียก server ด้วย <code>google.script.run</code></li>
+        </ul>
+      </section>
+      <section class="card">
+        <h3>Data store</h3>
+        <ul>
+          <li>Google Sheets เป็นฐานข้อมูลกลาง</li>
+          <li>เปิดด้วย Spreadsheet ID ไม่พึ่ง active spreadsheet</li>
+          <li>ค่าเริ่มต้นอยู่ใน <code>DEFAULT_DASHBOARD_SPREADSHEET_ID</code></li>
+          <li>เปลี่ยนได้ด้วย Script Property <code>DASHBOARD_VACCINE_SPREADSHEET_ID</code></li>
+        </ul>
+      </section>
+    </div>
+
+    <h2>3. การแยก Public และ Staff</h2>
+    <table>
+      <thead>
+        <tr><th>Deployment</th><th>Manifest</th><th>สิทธิ์</th><th>หน้าหลัก</th><th>หน้าที่</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Public</td>
+          <td><code>appsscript.json</code></td>
+          <td><code>USER_DEPLOYING</code> / <code>ANYONE_ANONYMOUS</code></td>
+          <td><code>publicDashboard.html</code></td>
+          <td>ข้อมูลรวมที่เปิดโดยไม่ล็อกอิน</td>
+        </tr>
+        <tr>
+          <td>Staff</td>
+          <td><code>appsscript.staff.json</code></td>
+          <td><code>USER_ACCESSING</code> / <code>DOMAIN</code></td>
+          <td><code>?page=staff</code> เปิด <code>adminBaseline.html</code></td>
+          <td>ระบุตัวตนผู้ใช้และทำงานทะเบียนตั้งต้นตาม role</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>ทั้งสอง deployment ใช้ codebase และ Spreadsheet กลางเดียวกัน แต่ต้องเป็นคนละ Apps Script project/Script ID เพื่อไม่ให้ manifest สาธารณะและ manifest เจ้าหน้าที่ทับกัน</p>
+
+    <h2>4. Workflow ทะเบียนตั้งต้นที่ถูกต้อง</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <strong>1. Stage + Validate</strong>
+        <small>DISTRICT_APPROVER วาง TSV ระบบตรวจข้อมูล หากผ่านจึงบันทึกแถวใน <code>BASELINE_STAGING</code> และสร้าง batch สถานะ <code>VALIDATED</code></small>
+      </div>
+      <div class="flow-step">
+        <strong>2. Reject เมื่อมีปัญหา</strong>
+        <small>หากพบ issue ระบบสร้าง batch สถานะ <code>REJECTED</code> แต่ไม่บันทึกข้อมูลเด็กลง staging</small>
+      </div>
+      <div class="flow-step">
+        <strong>3. Approve + Promote</strong>
+        <small>DISTRICT_APPROVER อนุมัติ batch จากนั้นระบบคัดลอกข้อมูลจาก staging เข้า <code>CHILD_REGISTRY</code> และนับเป็น provisional</small>
+      </div>
+      <div class="flow-step">
+        <strong>4. Confirm</strong>
+        <small>UNIT_CONFIRMER ของหน่วยนั้นยืนยัน batch ให้เป็น <code>UNIT_CONFIRMED</code> และยอดจึงเปลี่ยนจาก provisional เป็น confirmed</small>
+      </div>
+    </div>
+    <div class="notice notice-warn">
+      จุดสำคัญ: ข้อมูลเข้า <code>CHILD_REGISTRY</code> ในขั้น Approve ไม่ใช่ขั้น Confirm ส่วน Confirm เป็นการรับรองฐานและเปลี่ยนสถานะการนับ coverage
+    </div>
+    <p>การ Stage และ Approve ใช้ <code>LockService.getDocumentLock()</code> เพื่อป้องกันการเขียนพร้อมกัน หาก promote เข้า registry ล้มเหลว ระบบพยายามคืน batch กลับเป็นสถานะก่อนอนุมัติ</p>
+
+    <h2>5. การตรวจข้อมูลนำเข้า</h2>
+    <div class="grid grid-2">
+      <section class="card">
+        <h3>โครงสร้างไฟล์</h3>
+        <ul>
+          <li>หัวตารางต้องตรงกับ <code>BASELINE_HEADERS</code> ทั้ง 17 คอลัมน์และเรียงลำดับตรงกัน</li>
+          <li>หนึ่ง batch ต้องเป็นข้อมูลของหน่วยบริการเดียว</li>
+          <li>หน่วยบริการต้องอยู่ใน <code>CFG_SERVICE_UNITS</code> และ active</li>
+        </ul>
+      </section>
+      <section class="card">
+        <h3>กฎระดับแถว</h3>
+        <ul>
+          <li>CID เป็นตัวเลข 13 หลัก ไม่ซ้ำในชุด และไม่ซ้ำกับ batch ที่ระบบยอมรับแล้ว</li>
+          <li>วันเกิดเป็นวันที่จริงรูปแบบ <code>YYYY-MM-DD</code></li>
+          <li>สถานะวัคซีนอยู่ในรายการมาตรฐาน 5 ค่า</li>
+          <li>สถานะได้รับบางส่วนแต่ยังไม่ครบต้องมีวันนัดวัคซีนครั้งถัดไป</li>
+          <li>ต้องมีบ้านเลขที่ หมู่ สถานะทะเบียน ประเภทการเข้า เดือนเริ่มตัวชี้วัด อสม.หลัก และ ผรส.หลัก</li>
+        </ul>
+      </section>
+    </div>
+
+    <h2>6. Roles ที่ implement แล้ว</h2>
+    <table>
+      <thead><tr><th>Role</th><th>ทำได้</th><th>ขอบเขตข้อมูล</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>DISTRICT_APPROVER</code></td>
+          <td>Stage, Approve และดู batch ทุกหน่วย</td>
+          <td>ระดับอำเภอ</td>
+        </tr>
+        <tr>
+          <td><code>UNIT_CONFIRMER</code></td>
+          <td>Confirm และดู batch</td>
+          <td>เฉพาะ service unit ของตน</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>Staff endpoint อ่านอีเมลจาก <code>Session.getActiveUser().getEmail()</code> และค้น role จาก <code>CFG_BASELINE_USERS</code> เฉพาะแถวที่ active หากไม่มีบัญชี พบซ้ำ หรือ role ไม่ถูกต้อง ระบบจะปฏิเสธการทำงาน</p>
+
+    <h2>7. Google Sheets ที่ระบบสร้าง</h2>
+    <table>
+      <thead><tr><th>Sheet</th><th>หน้าที่</th><th>ผู้ดูแลข้อมูล</th></tr></thead>
+      <tbody>
+        <tr><td><code>CFG_SERVICE_UNITS</code></td><td>รหัส ชื่อ และสถานะ active ของหน่วยบริการ</td><td>ต้องกรอก configuration จริง</td></tr>
+        <tr><td><code>CFG_BASELINE_USERS</code></td><td>อีเมล role หน่วยบริการ และ active ของผู้ใช้</td><td>ต้องกรอก configuration จริง</td></tr>
+        <tr><td><code>BASELINE_BATCHES</code></td><td>สถานะ batch, จำนวนแถว, issues, ผู้ทำรายการ และเวลา</td><td>ระบบ</td></tr>
+        <tr><td><code>BASELINE_STAGING</code></td><td>ข้อมูลดิบของ batch ที่ผ่าน validation รออนุมัติ</td><td>ระบบ</td></tr>
+        <tr><td><code>CHILD_REGISTRY</code></td><td>ข้อมูลจาก batch ที่ได้รับอนุมัติระดับอำเภอแล้ว</td><td>ระบบ</td></tr>
+      </tbody>
+    </table>
+
+    <h2>8. Public dashboard ที่มีอยู่จริง</h2>
+    <div class="grid grid-2">
+      <section class="card">
+        <h3>ความก้าวหน้าวัคซีน</h3>
+        <span class="badge partial">NOT_READY</span>
+        <p>เป็นแท็บแรกตามการออกแบบ แต่ backend คืนข้อความ <strong>“กำลังเตรียมข้อมูลรายเดือน”</strong> เสมอ ยังไม่มีตัวเลข KPI หรือสถานะวัคซีนรายเดือนจริง</p>
+      </section>
+      <section class="card">
+        <h3>คุณภาพข้อมูล</h3>
+        <span class="badge done">ใช้งานจาก baseline ได้</span>
+        <p>แสดงจำนวนหน่วยยืนยัน, เด็กยืนยัน, เด็ก provisional, หน่วยที่ต้องติดตาม และสถานะ aggregate รายหน่วยบริการ</p>
+      </section>
+    </div>
+    <p>Public model ถูกประกอบใหม่จาก service units และ batches เท่านั้น พร้อม guard สำหรับชื่อ field ต้องห้าม เช่น CID, ชื่อเด็ก, วันเกิด, ที่อยู่, ผู้ปฏิบัติงาน, raw record, issue detail และข้อมูล audit</p>
+
+    <h2>9. Source code สำคัญ</h2>
+    <table>
+      <thead><tr><th>ไฟล์</th><th>ความรับผิดชอบ</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/main.ts</code></td><td>Apps Script endpoints, routing, spreadsheet connection และ orchestration</td></tr>
+        <tr><td><code>src/domain/baseline.ts</code></td><td>ชนิดข้อมูล หัวตาราง สถานะ และ contract ของ baseline</td></tr>
+        <tr><td><code>src/domain/validateBaseline.ts</code></td><td>กฎ validation ที่ไม่ผูกกับ Google Sheets</td></tr>
+        <tr><td><code>src/domain/publicDashboard.ts</code></td><td>สร้าง aggregate public model และ privacy guard</td></tr>
+        <tr><td><code>src/features/baseline/baselineService.ts</code></td><td>State transition และ coverage</td></tr>
+        <tr><td><code>src/features/baseline/baselineAccess.ts</code></td><td>Role และ service-unit authorization</td></tr>
+        <tr><td><code>src/infrastructure/sheetsBaselineRepository.ts</code></td><td>Provision และอ่าน/เขียน Google Sheets</td></tr>
+        <tr><td><code>src/ui/publicDashboard.html</code></td><td>หน้าสาธารณะ responsive</td></tr>
+        <tr><td><code>src/ui/adminBaseline.html</code></td><td>หน้าจัดการ baseline สำหรับเจ้าหน้าที่</td></tr>
+      </tbody>
+    </table>
+
+    <h2>10. Build, Test และ Deploy</h2>
+    <table>
+      <thead><tr><th>คำสั่ง</th><th>ผลที่ควรเกิด</th><th>สถานะตรวจล่าสุด</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm test</code></td><td>รัน Vitest ทั้งหมด</td><td><span class="badge future">รันไม่ได้: ไม่พบ vitest executable</span></td></tr>
+        <tr><td><code>npm run build</code></td><td>สร้าง public bundle และคัดลอก public manifest</td><td><span class="badge future">รันไม่ได้: ไม่พบ esbuild package</span></td></tr>
+        <tr><td><code>npm run build:staff</code></td><td>สร้าง bundle และคัดลอก staff manifest</td><td><span class="badge future">ยังยืนยันไม่ได้ด้วยสาเหตุเดียวกัน</span></td></tr>
+        <tr><td><code>npm run push:public</code></td><td>Build แล้ว push ไป public Script ID</td><td>ยังไม่ควรรันจน test/build ผ่าน</td></tr>
+        <tr><td><code>npm run push:staff</code></td><td>Build staff แล้ว push ไป staff Script ID</td><td>ยังไม่ควรรันจน test/build ผ่าน</td></tr>
+      </tbody>
+    </table>
+    <p>ไฟล์ <code>.clasp.public.json</code> และ <code>.clasp.staff.json</code> มี Script ID ตั้งค่าอยู่แล้ว แต่การมี target ไม่ได้แปลว่า deployment ล่าสุดถูกสร้างหรือทำงานผ่านการตรวจสอบแล้ว</p>
+
+    <h2>11. สิ่งที่ยังไม่มีใน implementation ปัจจุบัน</h2>
+    <div class="grid grid-2">
+      <section class="card">
+        <h3>Core monthly workflow</h3>
+        <ul>
+          <li>สถานะวัคซีนรายเดือนและ carry-forward</li>
+          <li>pending verification และการรับรองสถานะทางการ</li>
+          <li>submission, district close และการล็อกรอบ</li>
+          <li>KPI จากหน่วยที่ยืนยันพร้อม coverage ที่ชัดเจน</li>
+          <li>audit log สำหรับการแก้ย้อนหลัง</li>
+        </ul>
+      </section>
+      <section class="card">
+        <h3>Supplementary modules</h3>
+        <ul>
+          <li>บัญชีและ mobile follow-up ของ อสม./ผรส.</li>
+          <li>กิจกรรมบริการเชิงรุก</li>
+          <li>funnel วัคซีนทางเลือกและ export aggregate</li>
+          <li>notification และ escalation</li>
+          <li>backup, restore, outage และ security incident workflow</li>
+        </ul>
+      </section>
+    </div>
+    <p>หัวข้อเหล่านี้มีการตัดสินใจและออกแบบไว้ใน <code>CONTEXT.md</code> และ <code>docs/adr/</code> แต่ไม่ควรถูกอธิบายว่าเป็นฟีเจอร์ที่ใช้งานได้แล้ว</p>
+
+    <h2>12. ข้อสรุป</h2>
+    <div class="notice notice-ok">
+      โปรเจกต์ปัจจุบันเป็น baseline registry slice ที่มี privacy boundary และ deployment architecture ชัดเจน ไม่ใช่ระบบติดตามวัคซีนรายเดือนเต็มรูปแบบ
+    </div>
+    <div class="notice notice-warn">
+      ลำดับถัดไปที่ควรทำคือซ่อม dependency, รัน tests/build ใหม่, ตรวจ manifest แยก public/staff, ทำ dry run หนึ่งหน่วย และจึงพิจารณา deploy รายละเอียดทั้งหมดอยู่ใน <a href="webapp-todo.html">หน้า Todo</a>
+    </div>
+
+    <footer>
+      อ้างอิงจาก source code, manifests, tests, runbooks และ ADR ภายใน repository ณ วันที่ 12 มิถุนายน 2026
+    </footer>
+  </main>
+</body>
+</html>

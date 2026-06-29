@@ -11,6 +11,24 @@ Verify the standardised import, automatic validation, district approval, service
 - Standardised baseline file with machine-readable headers matching `BASELINE_HEADERS`.
 - Validation result, import batch ID, approval timestamp, and unit-confirmation timestamp.
 
+## Template Preparation Helper
+
+For the Trang dry run, use `tools/baseline-dry-run/Code.gs` as a temporary Apps Script helper in the prepared Google Sheet.
+
+1. Open the dry-run Google Sheet.
+2. Open Extensions > Apps Script.
+3. Paste the contents of `tools/baseline-dry-run/Code.gs` into the Apps Script editor and save.
+4. Run `setupBaselineDryRunSheets`.
+5. Confirm these sheets are created:
+   - `CFG_SERVICE_UNITS` with service unit `09941` / `รพ.สต.ตรัง`.
+   - `CFG_BASELINE_USERS` with rows for `DISTRICT_APPROVER` and `UNIT_CONFIRMER`.
+   - `BASELINE_TEMPLATE` with the exact machine-readable import headers.
+   - `LEGACY_MAPPING_NOTES` showing how the legacy `พชอ.วัคซีน ปี 2569 - รพ.สต.ตรัง.csv` columns map to the baseline template.
+6. Fill the two actor emails in `CFG_BASELINE_USERS`.
+7. Fill or paste child baseline rows into `BASELINE_TEMPLATE`, resolving required fields before staging.
+
+The helper only prepares configuration and template sheets. It must not be used as a substitute for the controlled web-app staging, district approval, or service-unit confirmation workflow.
+
 ## Procedure
 
 1. Deploy the test web app against the dry-run spreadsheet and run `provisionBaselineTables`.

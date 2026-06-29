@@ -1,5 +1,6 @@
 import type { BaselineBatch } from "./domain/baseline";
 import { acceptedBaselineDuplicateIssues } from "./domain/baselineExistingDuplicate";
+import { buildPublicDashboardModel } from "./domain/publicDashboard";
 import { validateBaselineRows } from "./domain/validateBaseline";
 import { assertBaselineAction, type BaselineActor } from "./features/baseline/baselineAccess";
 import {
@@ -8,14 +9,37 @@ import {
 } from "./features/baseline/baselineService";
 import { SheetsBaselineRepository } from "./infrastructure/sheetsBaselineRepository";
 
+// Vaccine monthly imports
+import { VaccineMonthlyRepository } from "./infrastructure/vaccineMonthlyRepository";
+import { SERVICE_UNIT_CONFIGS, validateServiceUnitConfigs } from "./config/serviceUnits";
+import type { PublicVaccineDashboardModel } from "./domain/vaccineMonthly";
+
 export const DISTRICT_SERVICE_UNIT_TOTAL = 14;
+export const DEFAULT_DASHBOARD_SPREADSHEET_ID = "1H4ShB4fZCHt22J8coGXHn1KDgykjrxi3TueJDJ9ZoA8";
+export const DASHBOARD_SPREADSHEET_ID_PROPERTY = "DASHBOARD_VACCINE_SPREADSHEET_ID";
+
+// Vaccine monthly configuration
+export const VACCINE_SERVICE_UNIT_CONFIGS_PROPERTY = "VACCINE_SERVICE_UNIT_CONFIGS";
+export const DEFAULT_REPORT_MONTH = new Date().toISOString().slice(0, 7); // format: YYYY-MM
+
+interface AppsScriptGetEvent {
+  parameter?: Record<string, string | undefined>;
+}
 
 export function applicationInfo() {
   return { application: "Dashboard Vaccine", capability: "baseline-registry", version: "0.1.0" } as const;
 }
 
 function repository(): SheetsBaselineRepository {
-  return new SheetsBaselineRepository(SpreadsheetApp.getActive());
+  return new SheetsBaselineRepository(dashboardSpreadsheet());
+}
+
+function dashboardSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
+  const configuredId = PropertiesService.getScriptProperties()
+    .getProperty(DASHBOARD_SPREADSHEET_ID_PROPERTY)
+    ?.trim();
+
+  return SpreadsheetApp.openById(configuredId || DEFAULT_DASHBOARD_SPREADSHEET_ID);
 }
 
 function actor(repo: SheetsBaselineRepository): BaselineActor {
@@ -142,8 +166,142 @@ function getBaselineAdminModel() {
   };
 }
 
-function doGet(): GoogleAppsScript.HTML.HtmlOutput {
-  return HtmlService.createHtmlOutputFromFile("adminBaseline").setTitle("Dashboard Vaccine - ทะเบียนตั้งต้น");
+function getPublicDashboardModel() {
+  const repo = repository();
+
+  return buildPublicDashboardModel({
+    lastUpdatedAt: new Date().toISOString(),
+    serviceUnits: repo.listActiveServiceUnits(),
+    batches: repo.listBatches(),
+    totalUnits: DISTRICT_SERVICE_UNIT_TOTAL,
+  });
+}
+
+// ============================================================================
+// VACCINE MONTHLY DATA FUNCTIONS
+// ============================================================================
+
+/**
+ * ตรวจสอบ configuration ก่อนใช้งาน
+ * คืนค่า error ถ้ามี spreadsheetId ว่าง
+ */
+function validateConfigs() {
+  const validation = validateServiceUnitConfigs();
+  if (!validation.valid) {
+    let errorMsg = "Configuration Errors:\n" + validation.errors.join("\n");
+    if (validation.warnings.length > 0) {
+      errorMsg += "\n\nWarnings:\n" + validation.warnings.join("\n");
+    }
+    throw new Error(errorMsg);
+  }
+  if (validation.warnings.length > 0) {
+    console.warn("Configuration Warnings:\n" + validation.warnings.join("\n"));
+  }
+  return validation;
+}
+
+/**
+ * ดึง configuration สำหรับ 13 รพ.สต.
+ * ใช้ configs จาก serviceUnits.ts
+ */
+function getServiceUnitConfigs() {
+  return SERVICE_UNIT_CONFIGS;
+}
+
+/**
+ * สร้าง VaccineMonthlyRepository instance
+ */
+function vaccineMonthlyRepo(): VaccineMonthlyRepository {
+  return new VaccineMonthlyRepository(getServiceUnitConfigs());
+}
+
+/**
+ * ดึงข้อมูลวัคซีนรายเดือนแบบ aggregate สำหรับ public dashboard
+ */
+export function getVaccineMonthlyPublicDashboard(reportMonth?: string): PublicVaccineDashboardModel {
+  const repo = vaccineMonthlyRepo();
+  const month = reportMonth || DEFAULT_REPORT_MONTH;
+
+  const result = repo.fetchMonthlyData({
+    reportMonth: month,
+    serviceUnitConfigs: getServiceUnitConfigs(),
+  });
+
+  // ส่งคืน public model (ไม่มีข้อมูลระบุตัวตน)
+  return repo.buildPublicDashboard(result.summary);
+}
+
+/**
+ * ดึงข้อมูลวัคซีนรายเดือนแบบละเอียด (สำหรับ admin)
+ * ต้อง login และมีสิทธิ์
+ */
+export function getVaccineMonthlyAdminData(reportMonth?: string) {
+  const repo = vaccineMonthlyRepo();
+  const month = reportMonth || DEFAULT_REPORT_MONTH;
+  const activeUser = Session.getActiveUser().getEmail();
+
+  if (!activeUser) {
+    throw new Error("Authentication required");
+  }
+
+  const result = repo.fetchMonthlyData({
+    reportMonth: month,
+    serviceUnitConfigs: getServiceUnitConfigs(),
+  });
+
+  return {
+    fetchedBy: activeUser,
+    fetchedAt: new Date().toISOString(),
+    ...result,
+  };
+}
+
+/**
+ * API endpoint สำหรับดึงข้อมูลวัคซีนรายเดือน (JSON API)
+ * ใช้สำหรับ frontend dashboard ที่ deploy บน Netlify
+ */
+export function fetchVaccineMonthlyData(event?: AppsScriptGetEvent) {
+  try {
+    const reportMonth = event?.parameter?.month || DEFAULT_REPORT_MONTH;
+    const isAdmin = event?.parameter?.admin === "true";
+
+    if (isAdmin) {
+      const data = getVaccineMonthlyAdminData(reportMonth);
+      return ContentService.createTextOutput(JSON.stringify(data))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else {
+      const data = getVaccineMonthlyPublicDashboard(reportMonth);
+      return ContentService.createTextOutput(JSON.stringify(data))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch (error) {
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+export function publicDashboardPageForRequest(event?: AppsScriptGetEvent): "publicDashboard" | "adminBaseline" {
+  return event?.parameter?.page === "staff" ? "adminBaseline" : "publicDashboard";
+}
+
+function doGet(event?: AppsScriptGetEvent): GoogleAppsScript.HTML.HtmlOutput | ContentService.TextOutput {
+  // ตรวจสอบว่าเป็นการเรียก API แบบ JSON หรือไม่
+  if (event?.parameter?.format === "json" || event?.parameter?.action === "fetch") {
+    return fetchVaccineMonthlyData(event);
+  }
+
+  // ถ้าไม่ใช่ API ให้ render HTML page เหมือนเดิม
+  const page = publicDashboardPageForRequest(event);
+  const title =
+    page === "publicDashboard"
+      ? "Dashboard Vaccine - อำเภอมายอ"
+      : "Dashboard Vaccine - ทะเบียนตั้งต้น";
+
+  return HtmlService.createHtmlOutputFromFile(page).setTitle(title);
 }
 
 Object.assign(globalThis, {
@@ -153,4 +311,9 @@ Object.assign(globalThis, {
   approveBaselineBatch,
   confirmBaselineBatch,
   getBaselineAdminModel,
+  getPublicDashboardModel,
+  // Vaccine monthly functions
+  getVaccineMonthlyPublicDashboard,
+  getVaccineMonthlyAdminData,
+  fetchVaccineMonthlyData,
 });
