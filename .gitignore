@@ -1,5 +1,7 @@
 .worktrees/
 .superpowers/
+_local/
+.claude/
 node_modules/
 node_modules.broken-*/
 dist/
@@ -7,6 +9,7 @@ dist/
 .clasp.public.json
 .clasp.staff.json
 *.csv
+*.tsv
 *.gsheet
 outputs/
 scripts/__pycache__/
