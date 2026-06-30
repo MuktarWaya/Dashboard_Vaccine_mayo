@@ -68,7 +68,7 @@ export function validateUnitAggregateSubmission(value: unknown): AggregateValida
   }
 
   const reportMonth = value.reportMonth;
-  if (typeof reportMonth !== "string" || !/^\d{4}-\d{2}$/.test(reportMonth)) {
+  if (typeof reportMonth !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(reportMonth)) {
     return { ok: false, error: "INVALID_REPORT_MONTH" };
   }
 
@@ -90,7 +90,22 @@ export function validateUnitAggregateSubmission(value: unknown): AggregateValida
     return { ok: false, error: "MISSING_FIELD" };
   }
 
-  return { ok: true, value: value as unknown as UnitAggregateSubmission };
+  return {
+    ok: true,
+    value: {
+      serviceUnitCode,
+      reportMonth,
+      totalChildren: value.totalChildren,
+      onSchedule: value.onSchedule,
+      delayed: value.delayed,
+      refused: value.refused,
+      postponed: value.postponed,
+      notFound: value.notFound,
+      followedUp: value.followedUp,
+      submittedAt: value.submittedAt,
+      token: value.token,
+    },
+  };
 }
 
 export function upsertMonthlyAggregate(

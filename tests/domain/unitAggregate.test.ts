@@ -31,6 +31,30 @@ describe("unit aggregate domain", () => {
     });
   });
 
+  it("removes extra keys from a valid aggregate submission", () => {
+    const result = validateUnitAggregateSubmission({
+      ...validPayload,
+      cid: "1234567890123",
+      raw: { private: true },
+      notes: "private note",
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value: validPayload,
+    });
+    expect(result.ok && result.value).not.toHaveProperty("cid");
+    expect(result.ok && result.value).not.toHaveProperty("raw");
+    expect(result.ok && result.value).not.toHaveProperty("notes");
+  });
+
+  it.each(["2026-01", "2026-12"])("accepts valid report month %s", (reportMonth) => {
+    expect(validateUnitAggregateSubmission({ ...validPayload, reportMonth })).toMatchObject({
+      ok: true,
+      value: { reportMonth },
+    });
+  });
+
   it("rejects non-object input and missing required fields as missing field", () => {
     expect(validateUnitAggregateSubmission("not an aggregate")).toMatchObject({
       ok: false,
@@ -66,6 +90,13 @@ describe("unit aggregate domain", () => {
     expect(validateUnitAggregateSubmission({ ...validPayload, delayed: Number.NaN })).toMatchObject({
       ok: false,
       error: "MISSING_FIELD",
+    });
+  });
+
+  it.each(["2026-00", "2026-13"])("rejects invalid report month boundary %s", (reportMonth) => {
+    expect(validateUnitAggregateSubmission({ ...validPayload, reportMonth })).toMatchObject({
+      ok: false,
+      error: "INVALID_REPORT_MONTH",
     });
   });
 
@@ -257,7 +288,7 @@ describe("unit aggregate domain", () => {
     }
   });
 
-  it("detects forbidden keys recursively in arrays and objects with normalized key variants", () => {
+  it("literally detects forbidden keys recursively in arrays and objects with normalized key variants", () => {
     const publicModel = buildPublicDashboardFromAggregates("2026-06", [
       { ...validPayload, receivedAt: "2026-06-30T11:00:00+07:00" },
     ]);
