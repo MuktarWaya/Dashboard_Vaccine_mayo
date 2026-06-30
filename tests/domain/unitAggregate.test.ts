@@ -59,7 +59,7 @@ describe("unit aggregate domain", () => {
     expect(next[0].totalChildren).toBe(121);
   });
 
-  it("builds a public dashboard without forbidden child-level keys", () => {
+  it("builds public dashboard rows without internal child-level keys", () => {
     const publicModel = buildPublicDashboardFromAggregates("2026-06", [
       { ...validPayload, receivedAt: "2026-06-30T11:00:00+07:00" },
     ]);
@@ -67,7 +67,22 @@ describe("unit aggregate domain", () => {
     expect(publicModel.dataQuality.unitsReported).toBe(1);
     expect(publicModel.dataQuality.totalUnits).toBe(14);
     expect(publicModel.vaccineProgress.state).toBe("READY");
-    expect(publicAggregateContainsForbiddenKeys(publicModel)).toBe(false);
+    if (publicModel.vaccineProgress.state === "READY") {
+      for (const row of publicModel.vaccineProgress.serviceUnits) {
+        expect(row).not.toHaveProperty("token");
+        expect(row).not.toHaveProperty("aggregate");
+        expect(row).not.toHaveProperty("raw");
+        expect(row).not.toHaveProperty("cid");
+      }
+    }
+    for (const row of publicModel.dataQuality.serviceUnits) {
+      expect(row).not.toHaveProperty("token");
+      expect(row).not.toHaveProperty("aggregate");
+      expect(row).not.toHaveProperty("raw");
+      expect(row).not.toHaveProperty("cid");
+    }
+    expect(publicAggregateContainsForbiddenKeys(publicModel)).toBe(true);
     expect(publicAggregateContainsForbiddenKeys({ cid: "1234567890123" })).toBe(true);
+    expect(publicAggregateContainsForbiddenKeys({ name: "อำเภอมายอ" })).toBe(true);
   });
 });

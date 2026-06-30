@@ -195,7 +195,7 @@ export function buildPublicDashboardFromAggregates(
 }
 
 export function publicAggregateContainsForbiddenKeys(value: unknown): boolean {
-  return containsForbiddenKey(value, new WeakSet<object>(), []);
+  return containsForbiddenKey(value, new WeakSet<object>());
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -242,9 +242,9 @@ function toPublicQualityRow(row: PublicAggregateRow): PublicServiceUnitQuality {
   };
 }
 
-function containsForbiddenKey(value: unknown, seen: WeakSet<object>, path: readonly string[]): boolean {
+function containsForbiddenKey(value: unknown, seen: WeakSet<object>): boolean {
   if (Array.isArray(value)) {
-    return value.some((item) => containsForbiddenKey(item, seen, path));
+    return value.some((item) => containsForbiddenKey(item, seen));
   }
 
   if (!isRecord(value)) {
@@ -257,10 +257,10 @@ function containsForbiddenKey(value: unknown, seen: WeakSet<object>, path: reado
   seen.add(value);
 
   for (const [key, childValue] of Object.entries(value)) {
-    if (normalizedForbiddenKeys.has(normalizeKey(key)) && !isAllowedPublicAggregateKey(path, key)) {
+    if (normalizedForbiddenKeys.has(normalizeKey(key))) {
       return true;
     }
-    if (containsForbiddenKey(childValue, seen, [...path, key])) {
+    if (containsForbiddenKey(childValue, seen)) {
       return true;
     }
   }
@@ -270,13 +270,6 @@ function containsForbiddenKey(value: unknown, seen: WeakSet<object>, path: reado
 
 function normalizeKey(key: string): string {
   return key.toLowerCase().replace(/[_-]/g, "");
-}
-
-function isAllowedPublicAggregateKey(path: readonly string[], key: string): boolean {
-  return (
-    normalizeKey(key) === "name" &&
-    path.map(normalizeKey).join(".") === "vaccineprogress.district"
-  );
 }
 
 const normalizedForbiddenKeys = new Set(FORBIDDEN_PUBLIC_KEYS.map(normalizeKey));
