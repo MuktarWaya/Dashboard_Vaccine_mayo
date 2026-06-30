@@ -5,6 +5,7 @@
 
 import React from 'react';
 import type { PublicDashboardData, ExecutiveDashboardData } from '@/types/vaccine';
+import { buildNotReadyDashboardData } from './dashboardViewModel';
 
 // TODO: ใส่ GAS Web App URL ของคุณที่นี่
 const GAS_WEB_APP_URL = import.meta.env.VITE_GAS_WEB_APP_URL || 'YOUR_GAS_WEB_APP_URL_HERE';
@@ -278,10 +279,14 @@ export const useVaccineData = (useMock = true) => {
     setError(null);
 
     try {
-      if (useMock || GAS_WEB_APP_URL.includes('YOUR_GAS_WEB_APP_URL')) {
+      if (useMock) {
         // Fallback to mock data
         await new Promise(resolve => setTimeout(resolve, 500));
         return mockDataService.getPublicDashboard(month);
+      }
+
+      if (GAS_WEB_APP_URL.includes('YOUR_GAS_WEB_APP_URL')) {
+        return buildNotReadyDashboardData('ยังไม่ได้ตั้งค่าแหล่งข้อมูล Google Apps Script');
       }
 
       return await fetchPublicDashboard(month);
@@ -289,9 +294,8 @@ export const useVaccineData = (useMock = true) => {
       const errorMsg = err instanceof Error ? err.message : 'ไม่สามารถดึงข้อมูลได้';
       setError(errorMsg);
 
-      // Fallback to mock on error
-      console.warn('API Error, using mock data:', errorMsg);
-      return mockDataService.getPublicDashboard(month);
+      console.warn('API Error, showing not-ready dashboard:', errorMsg);
+      return buildNotReadyDashboardData('ไม่สามารถดึงข้อมูลรายเดือนได้');
     } finally {
       setLoading(false);
     }
