@@ -65,3 +65,7 @@ git diff --cached --stat
 ```
 
 Do not use `git add -A` when local working files are mixed with code changes. Stage specific files instead.
+
+## Service Unit GAS Setup
+
+See `docs/runbooks/service-unit-gas-setup.md` for the steps to install the generated `Code.gs` script in each service-unit Google Sheet.
