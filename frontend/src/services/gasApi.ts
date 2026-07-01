@@ -140,7 +140,7 @@ export const mockDataService = {
       serviceUnits: [
         {
           serviceUnitCode: '09947',
-          serviceUnitName: 'รพ.สต.มายอ',
+          serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปะโด',
           reportStatus: 'ส่งครบ',
           coverage: 98.5,
           totalChildren: 145,
@@ -149,7 +149,7 @@ export const mockDataService = {
         },
         {
           serviceUnitCode: '09944',
-          serviceUnitName: 'รพ.สต.ท่าแพะ',
+          serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลลางา',
           reportStatus: 'ส่งครบ',
           coverage: 97.2,
           totalChildren: 132,
@@ -158,7 +158,7 @@ export const mockDataService = {
         },
         {
           serviceUnitCode: '09951',
-          serviceUnitName: 'รพ.สต.ป่าโนน',
+          serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปานัน',
           reportStatus: 'ส่งแต่ยังติดตาม',
           coverage: 89.2,
           totalChildren: 120,
@@ -183,8 +183,8 @@ export const mockDataService = {
       executiveView: {
         kpiScores: {
           district: 94.8,
-          bestUnit: { code: '09947', name: 'รพ.สต.มายอ', score: 98.5 },
-          needsAttention: { code: '09951', name: 'รพ.สต.ป่าโนน', score: 89.2 },
+          bestUnit: { code: '09947', name: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปะโด', score: 98.5 },
+          needsAttention: { code: '09951', name: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปานัน', score: 89.2 },
         },
         trends: {
           monthOverMonth: 2.3,
@@ -193,7 +193,7 @@ export const mockDataService = {
         rankings: [
           {
             serviceUnitCode: '09947',
-            serviceUnitName: 'รพ.สต.มายอ',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปะโด',
             reportStatus: 'ส่งครบ',
             coverage: 98.5,
             totalChildren: 145,
@@ -202,7 +202,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09944',
-            serviceUnitName: 'รพ.สต.ท่าแพะ',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลลางา',
             reportStatus: 'ส่งครบ',
             coverage: 97.2,
             totalChildren: 132,
@@ -211,7 +211,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09949',
-            serviceUnitName: 'รพ.สต.บาตอง',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลสาคอใต้',
             reportStatus: 'ส่งครบ',
             coverage: 96.8,
             totalChildren: 128,
@@ -220,7 +220,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09943',
-            serviceUnitName: 'รพ.สต.ตะโกะ',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลลุโบะยิไร',
             reportStatus: 'ส่งครบ',
             coverage: 96.1,
             totalChildren: 142,
@@ -229,7 +229,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09942',
-            serviceUnitName: 'รพ.สต.ทับปุด',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลกระหวะ',
             reportStatus: 'ส่งครบ',
             coverage: 95.4,
             totalChildren: 138,
@@ -238,7 +238,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09948',
-            serviceUnitName: 'รพ.สต.ตะเคิด',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลสาคอบน',
             reportStatus: 'ส่งครบ',
             coverage: 95.1,
             totalChildren: 125,
@@ -247,7 +247,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09945',
-            serviceUnitName: 'รพ.สต.ปาโจะ',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลกระเสาะ',
             reportStatus: 'ส่งแต่ยังติดตาม',
             coverage: 94.8,
             totalChildren: 135,
@@ -256,7 +256,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09946',
-            serviceUnitName: 'รพ.สต.ป่าไก่',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลเกาะจัน',
             reportStatus: 'ส่งครบ',
             coverage: 94.2,
             totalChildren: 129,
@@ -265,7 +265,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09950',
-            serviceUnitName: 'รพ.สต.ไหล่ป่า',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลสะกำ',
             reportStatus: 'ส่งครบ',
             coverage: 93.7,
             totalChildren: 131,
@@ -274,7 +274,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09941',
-            serviceUnitName: 'รพ.สต.บาตัง',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลตรัง',
             reportStatus: 'ส่งแต่ยังติดตาม',
             coverage: 92.9,
             totalChildren: 140,
@@ -282,8 +282,8 @@ export const mockDataService = {
             lastUpdated: new Date().toISOString(),
           },
           {
-            serviceUnitCode: '09952',
-            serviceUnitName: 'รพ.สต.ห้วยลาด',
+            serviceUnitCode: '41083',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลบ้านน้ำใส',
             reportStatus: 'ส่งครบ',
             coverage: 91.8,
             totalChildren: 127,
@@ -291,8 +291,8 @@ export const mockDataService = {
             lastUpdated: new Date().toISOString(),
           },
           {
-            serviceUnitCode: '09954',
-            serviceUnitName: 'รพ.สต.โคกโต๊ะ',
+            serviceUnitCode: '77483',
+            serviceUnitName: 'ศูนย์สุขภาพชุมชนตำบลมายอ',
             reportStatus: 'ส่งครบ',
             coverage: 91.2,
             totalChildren: 124,
@@ -300,8 +300,8 @@ export const mockDataService = {
             lastUpdated: new Date().toISOString(),
           },
           {
-            serviceUnitCode: '09953',
-            serviceUnitName: 'รพ.สต.ท่าลาด',
+            serviceUnitCode: '09940',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลถนน',
             reportStatus: 'ส่งแต่ยังติดตาม',
             coverage: 90.5,
             totalChildren: 130,
@@ -310,7 +310,7 @@ export const mockDataService = {
           },
           {
             serviceUnitCode: '09951',
-            serviceUnitName: 'รพ.สต.ป่าโนน',
+            serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปานัน',
             reportStatus: 'ส่งแต่ยังติดตาม',
             coverage: 89.2,
             totalChildren: 120,

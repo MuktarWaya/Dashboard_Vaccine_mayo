@@ -39,28 +39,28 @@ const ExecutiveDashboard: React.FC = () => {
         executiveView: {
           kpiScores: {
             district: 94.8,
-            bestUnit: { code: '09947', name: 'รพ.สต.มายอ', score: 98.5 },
-            needsAttention: { code: '09951', name: 'รพ.สต.ป่าโนน', score: 89.2 },
+            bestUnit: { code: '09947', name: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปะโด', score: 98.5 },
+            needsAttention: { code: '09951', name: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปานัน', score: 89.2 },
           },
           trends: {
             monthOverMonth: 2.3,
             comparedToLastMonth: 42,
           },
           rankings: [
-            { serviceUnitCode: '09947', serviceUnitName: 'รพ.สต.มายอ', reportStatus: 'ส่งครบ', coverage: 98.5, totalChildren: 145, needFollowUp: 2, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09944', serviceUnitName: 'รพ.สต.ท่าแพะ', reportStatus: 'ส่งครบ', coverage: 97.2, totalChildren: 132, needFollowUp: 4, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09949', serviceUnitName: 'รพ.สต.บาตอง', reportStatus: 'ส่งครบ', coverage: 96.8, totalChildren: 128, needFollowUp: 4, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09943', serviceUnitName: 'รพ.สต.ตะโกะ', reportStatus: 'ส่งครบ', coverage: 96.1, totalChildren: 142, needFollowUp: 6, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09942', serviceUnitName: 'รพ.สต.ทับปุด', reportStatus: 'ส่งครบ', coverage: 95.4, totalChildren: 138, needFollowUp: 6, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09948', serviceUnitName: 'รพ.สต.ตะเคิด', reportStatus: 'ส่งครบ', coverage: 95.1, totalChildren: 125, needFollowUp: 6, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09945', serviceUnitName: 'รพ.สต.ปาโจะ', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 94.8, totalChildren: 135, needFollowUp: 7, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09946', serviceUnitName: 'รพ.สต.ป่าไก่', reportStatus: 'ส่งครบ', coverage: 94.2, totalChildren: 129, needFollowUp: 8, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09950', serviceUnitName: 'รพ.สต.ไหล่ป่า', reportStatus: 'ส่งครบ', coverage: 93.7, totalChildren: 131, needFollowUp: 8, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09941', serviceUnitName: 'รพ.สต.บาตัง', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 92.9, totalChildren: 140, needFollowUp: 10, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09952', serviceUnitName: 'รพ.สต.ห้วยลาด', reportStatus: 'ส่งครบ', coverage: 91.8, totalChildren: 127, needFollowUp: 10, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09954', serviceUnitName: 'รพ.สต.โคกโต๊ะ', reportStatus: 'ส่งครบ', coverage: 91.2, totalChildren: 124, needFollowUp: 11, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09953', serviceUnitName: 'รพ.สต.ท่าลาด', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 90.5, totalChildren: 130, needFollowUp: 12, lastUpdated: new Date().toISOString() },
-            { serviceUnitCode: '09951', serviceUnitName: 'รพ.สต.ป่าโนน', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 89.2, totalChildren: 120, needFollowUp: 13, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09947', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปะโด', reportStatus: 'ส่งครบ', coverage: 98.5, totalChildren: 145, needFollowUp: 2, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09944', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลลางา', reportStatus: 'ส่งครบ', coverage: 97.2, totalChildren: 132, needFollowUp: 4, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09949', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลสาคอใต้', reportStatus: 'ส่งครบ', coverage: 96.8, totalChildren: 128, needFollowUp: 4, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09943', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลลุโบะยิไร', reportStatus: 'ส่งครบ', coverage: 96.1, totalChildren: 142, needFollowUp: 6, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09942', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลกระหวะ', reportStatus: 'ส่งครบ', coverage: 95.4, totalChildren: 138, needFollowUp: 6, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09948', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลสาคอบน', reportStatus: 'ส่งครบ', coverage: 95.1, totalChildren: 125, needFollowUp: 6, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09945', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลกระเสาะ', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 94.8, totalChildren: 135, needFollowUp: 7, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09946', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลเกาะจัน', reportStatus: 'ส่งครบ', coverage: 94.2, totalChildren: 129, needFollowUp: 8, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09950', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลสะกำ', reportStatus: 'ส่งครบ', coverage: 93.7, totalChildren: 131, needFollowUp: 8, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09941', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลตรัง', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 92.9, totalChildren: 140, needFollowUp: 10, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '41083', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลบ้านน้ำใส', reportStatus: 'ส่งครบ', coverage: 91.8, totalChildren: 127, needFollowUp: 10, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '77483', serviceUnitName: 'ศูนย์สุขภาพชุมชนตำบลมายอ', reportStatus: 'ส่งครบ', coverage: 91.2, totalChildren: 124, needFollowUp: 11, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09940', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลถนน', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 90.5, totalChildren: 130, needFollowUp: 12, lastUpdated: new Date().toISOString() },
+            { serviceUnitCode: '09951', serviceUnitName: 'โรงพยาบาลส่งเสริมสุขภาพตำบลปานัน', reportStatus: 'ส่งแต่ยังติดตาม', coverage: 89.2, totalChildren: 120, needFollowUp: 13, lastUpdated: new Date().toISOString() },
           ],
         },
       });
@@ -322,11 +322,11 @@ const ExecutiveDashboard: React.FC = () => {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-surface-300">
                 <ArrowUp className="w-5 h-5 text-status-success flex-shrink-0 mt-0.5" />
-                <span>รพ.สต.มายอ มีคะแนนดีที่สุด 98.5% ควรนำเสนอเป็นตัวอย่าง</span>
+                <span>โรงพยาบาลส่งเสริมสุขภาพตำบลปะโด มีคะแนนดีที่สุด 98.5% ควรนำเสนอเป็นตัวอย่าง</span>
               </li>
               <li className="flex items-start gap-3 text-surface-300">
                 <ArrowDown className="w-5 h-5 text-status-warning flex-shrink-0 mt-0.5" />
-                <span>รพ.สต.ป่าโนน ต้องการความช่วยเหลือเพิ่มเติม คะแนน 89.2%</span>
+                <span>โรงพยาบาลส่งเสริมสุขภาพตำบลปานัน ต้องการความช่วยเหลือเพิ่มเติม คะแนน 89.2%</span>
               </li>
               <li className="flex items-start gap-3 text-surface-300">
                 <Target className="w-5 h-5 text-accent-gold flex-shrink-0 mt-0.5" />

@@ -20,8 +20,10 @@ import {
   createAdminSession,
   defaultServiceUnitSettings,
   serviceUnitByCode,
+  toServiceUnitSettingView,
   verifyAdminPassword,
   type ServiceUnitSetting,
+  type ServiceUnitSettingView,
 } from "./domain/serviceUnitSettings";
 import {
   buildPublicDashboardFromAggregates,
@@ -341,22 +343,33 @@ export function adminLogin(password: string): { sessionToken: string; expiresInS
   };
 }
 
-export function getSettings(sessionToken: string): ServiceUnitSetting[] {
+export function getSettings(sessionToken: string): ServiceUnitSettingView[] {
   assertAdminSession(sessionToken);
   const settings = serviceUnitSettingsRepository().listSettings();
-  return settings.length > 0 ? settings : defaultServiceUnitSettings();
+  return (settings.length > 0 ? settings : defaultServiceUnitSettings()).map(toServiceUnitSettingView);
 }
 
 export function saveSettings(
   sessionToken: string,
-  settings: ServiceUnitSetting[],
+  settings: ServiceUnitSettingView[],
 ): { status: "SETTINGS_SAVED" } {
   assertAdminSession(sessionToken);
   if (!Array.isArray(settings) || settings.length === 0) {
     throw new Error("Settings payload required");
   }
   assertValidSettingsPayload(settings);
-  serviceUnitSettingsRepository().saveSettings(settings);
+  const repo = serviceUnitSettingsRepository();
+  const existingByCode = new Map(repo.listSettings().map((setting) => [setting.serviceUnitCode, setting]));
+  repo.saveSettings(settings.map((setting) => ({
+    serviceUnitCode: setting.serviceUnitCode,
+    serviceUnitName: setting.serviceUnitName,
+    spreadsheetId: setting.spreadsheetId,
+    sheetName: setting.sheetName,
+    enabled: setting.enabled,
+    tokenHash: existingByCode.get(setting.serviceUnitCode)?.tokenHash,
+    lastSubmittedAt: existingByCode.get(setting.serviceUnitCode)?.lastSubmittedAt,
+    lastError: existingByCode.get(setting.serviceUnitCode)?.lastError,
+  })));
   return { status: "SETTINGS_SAVED" };
 }
 
@@ -433,7 +446,7 @@ function assertAdminSession(sessionToken: string): void {
   }
 }
 
-function assertValidSettingsPayload(settings: readonly ServiceUnitSetting[]): void {
+function assertValidSettingsPayload(settings: readonly ServiceUnitSettingView[]): void {
   if (settings.length !== CANONICAL_SERVICE_UNITS.length) {
     throw new Error("Settings payload must include all service units");
   }

@@ -7,6 +7,7 @@ import {
   DEFAULT_MONTHLY_SHEET_NAME,
   createAdminSession,
   serviceUnitByCode,
+  toServiceUnitSettingView,
   verifyAdminPassword,
 } from "../../src/domain/serviceUnitSettings";
 
@@ -51,5 +52,22 @@ describe("service unit settings domain", () => {
     const session = createAdminSession("2026-06-30T10:00:00+07:00", () => "uuid-1");
     expect(session.sessionToken).toBe("uuid-1");
     expect(session.expiresInSeconds).toBe(1800);
+  });
+
+  it("maps settings to admin view without exposing token hashes", () => {
+    const view = toServiceUnitSettingView({
+      serviceUnitCode: "09941",
+      serviceUnitName: "โรงพยาบาลส่งเสริมสุขภาพตำบลตรัง",
+      spreadsheetId: "sheet-1",
+      sheetName: DEFAULT_MONTHLY_SHEET_NAME,
+      enabled: true,
+      tokenHash: "hash-1",
+    });
+
+    expect(view).toMatchObject({
+      serviceUnitCode: "09941",
+      tokenStatus: "ตั้งค่าแล้ว",
+    });
+    expect("tokenHash" in view).toBe(false);
   });
 });

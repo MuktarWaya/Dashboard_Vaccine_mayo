@@ -18,6 +18,15 @@ export interface ServiceUnitSetting extends CanonicalServiceUnit {
   lastError?: string;
 }
 
+export interface ServiceUnitSettingView extends CanonicalServiceUnit {
+  spreadsheetId: string;
+  sheetName: string;
+  enabled: boolean;
+  tokenStatus: "ตั้งค่าแล้ว" | "ยังไม่ตั้งค่า";
+  lastSubmittedAt?: string;
+  lastError?: string;
+}
+
 export interface AdminSession {
   sessionToken: string;
   issuedAt: string;
@@ -65,5 +74,18 @@ export function createAdminSession(now: string, uuid: () => string): AdminSessio
     sessionToken: uuid(),
     issuedAt: now,
     expiresInSeconds: ADMIN_SESSION_TTL_SECONDS,
+  };
+}
+
+export function toServiceUnitSettingView(setting: ServiceUnitSetting): ServiceUnitSettingView {
+  return {
+    serviceUnitCode: setting.serviceUnitCode,
+    serviceUnitName: setting.serviceUnitName,
+    spreadsheetId: setting.spreadsheetId,
+    sheetName: setting.sheetName,
+    enabled: setting.enabled,
+    tokenStatus: setting.tokenHash ? "ตั้งค่าแล้ว" : "ยังไม่ตั้งค่า",
+    lastSubmittedAt: setting.lastSubmittedAt,
+    lastError: setting.lastError,
   };
 }
