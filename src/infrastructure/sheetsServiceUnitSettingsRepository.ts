@@ -47,7 +47,7 @@ export function configToRow(config: ServiceUnitSetting): string[] {
 
 export function rowToConfig(row: readonly unknown[]): ServiceUnitSetting {
   return {
-    serviceUnitCode: String(row[0] ?? ""),
+    serviceUnitCode: normalizeServiceUnitCode(row[0]),
     serviceUnitName: String(row[1] ?? ""),
     spreadsheetId: String(row[2] ?? ""),
     sheetName: String(row[3] ?? ""),
@@ -77,7 +77,7 @@ export function aggregateToRow(aggregate: MonthlyUnitAggregate): string[] {
 export function rowToAggregate(row: readonly unknown[]): MonthlyUnitAggregate {
   return {
     reportMonth: String(row[0] ?? ""),
-    serviceUnitCode: String(row[1] ?? ""),
+    serviceUnitCode: normalizeServiceUnitCode(row[1]),
     totalChildren: Number(row[2] ?? 0),
     onSchedule: Number(row[3] ?? 0),
     delayed: Number(row[4] ?? 0),
@@ -89,6 +89,11 @@ export function rowToAggregate(row: readonly unknown[]): MonthlyUnitAggregate {
     token: "",
     receivedAt: String(row[10] ?? ""),
   };
+}
+
+function normalizeServiceUnitCode(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  return /^\d{1,4}$/.test(raw) ? raw.padStart(5, "0") : raw;
 }
 
 export class SheetsServiceUnitSettingsRepository {
@@ -157,6 +162,11 @@ export class SheetsServiceUnitSettingsRepository {
       sheet.getRange(2, 1, existingRows - 1, headers.length).clearContent();
     }
     if (rows.length > 0) {
+      headers.forEach((header, index) => {
+        if (header === "service_unit_code") {
+          sheet.getRange(2, index + 1, rows.length, 1).setNumberFormat("@");
+        }
+      });
       sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
     }
   }

@@ -72,6 +72,11 @@ describe("sheets service unit settings repository mapping", () => {
     expect(rowToConfig(["09941", "ตรัง", "", "รายงานรายเดือน", " FALSE "]).enabled).toBe(false);
   });
 
+  it("restores leading zeroes when Google Sheets returns service codes as numbers", () => {
+    expect(rowToConfig([9941, "ตรัง", "", "รายงานรายเดือน", "TRUE"]).serviceUnitCode).toBe("09941");
+    expect(rowToAggregate(["2026-07", 9941, 1, 1, 0, 0, 0, 0, 0, "submitted", "received"]).serviceUnitCode).toBe("09941");
+  });
+
   it("maps monthly aggregate rows", () => {
     const aggregate = {
       serviceUnitCode: "09941",
