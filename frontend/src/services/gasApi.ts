@@ -102,7 +102,7 @@ export async function testUnitConnection(sessionToken: string, serviceUnitCode: 
 export async function fetchPublicDashboard(month?: string): Promise<PublicDashboardData> {
   return fetchGAS<PublicDashboardData>('', {
     format: 'json',
-    action: 'fetch',
+    action: 'publicDashboard',
     month: month || new Date().toISOString().slice(0, 7),
   });
 }
