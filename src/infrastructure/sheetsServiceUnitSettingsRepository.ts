@@ -100,6 +100,36 @@ export class SheetsServiceUnitSettingsRepository {
     this.ensureSheet(INGESTION_LOG_SHEET_NAME, INGESTION_LOG_HEADERS);
   }
 
+  listSettings(): ServiceUnitSetting[] {
+    return this.readRows(CONFIG_SHEET_NAME, CONFIG_HEADERS.length).map(rowToConfig);
+  }
+
+  saveSettings(settings: readonly ServiceUnitSetting[]): void {
+    this.writeRows(CONFIG_SHEET_NAME, CONFIG_HEADERS, settings.map(configToRow));
+  }
+
+  listMonthlyAggregates(reportMonth?: string): MonthlyUnitAggregate[] {
+    const aggregates = this.readRows(AGGREGATES_SHEET_NAME, AGGREGATE_HEADERS.length).map(rowToAggregate);
+    return reportMonth ? aggregates.filter((aggregate) => aggregate.reportMonth === reportMonth) : aggregates;
+  }
+
+  saveMonthlyAggregates(aggregates: readonly MonthlyUnitAggregate[]): void {
+    this.writeRows(AGGREGATES_SHEET_NAME, AGGREGATE_HEADERS, aggregates.map(aggregateToRow));
+  }
+
+  appendIngestionLog(event: {
+    at: string;
+    event: string;
+    serviceUnitCode: string;
+    reportMonth: string;
+    message: string;
+  }): void {
+    const sheet = this.ensureSheet(INGESTION_LOG_SHEET_NAME, INGESTION_LOG_HEADERS);
+    sheet
+      .getRange(sheet.getLastRow() + 1, 1, 1, INGESTION_LOG_HEADERS.length)
+      .setValues([[event.at, event.event, event.serviceUnitCode, event.reportMonth, event.message]]);
+  }
+
   private ensureSheet(name: string, headers: readonly string[]): GoogleAppsScript.Spreadsheet.Sheet {
     const sheet = this.spreadsheet.getSheetByName(name) ?? this.spreadsheet.insertSheet(name);
 
@@ -108,5 +138,26 @@ export class SheetsServiceUnitSettingsRepository {
     }
 
     return sheet;
+  }
+
+  private readRows(name: string, width: number): unknown[][] {
+    const sheet = this.ensureSheet(name, []);
+    const rowCount = sheet.getLastRow();
+    if (rowCount <= 1) {
+      return [];
+    }
+
+    return sheet.getRange(2, 1, rowCount - 1, width).getValues();
+  }
+
+  private writeRows(name: string, headers: readonly string[], rows: readonly string[][]): void {
+    const sheet = this.ensureSheet(name, headers);
+    const existingRows = sheet.getLastRow();
+    if (existingRows > 1) {
+      sheet.getRange(2, 1, existingRows - 1, headers.length).clearContent();
+    }
+    if (rows.length > 0) {
+      sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+    }
   }
 }

@@ -13,6 +13,22 @@ import { SheetsBaselineRepository } from "./infrastructure/sheetsBaselineReposit
 import { VaccineMonthlyRepository } from "./infrastructure/vaccineMonthlyRepository";
 import { SERVICE_UNIT_CONFIGS, validateServiceUnitConfigs } from "./config/serviceUnits";
 import type { PublicVaccineDashboardModel } from "./domain/vaccineMonthly";
+import {
+  ADMIN_PASSWORD_PROPERTY,
+  ADMIN_SESSION_CACHE_PREFIX,
+  CANONICAL_SERVICE_UNITS,
+  createAdminSession,
+  defaultServiceUnitSettings,
+  serviceUnitByCode,
+  verifyAdminPassword,
+  type ServiceUnitSetting,
+} from "./domain/serviceUnitSettings";
+import {
+  buildPublicDashboardFromAggregates,
+  upsertMonthlyAggregate,
+  validateUnitAggregateSubmission,
+} from "./domain/unitAggregate";
+import { SheetsServiceUnitSettingsRepository } from "./infrastructure/sheetsServiceUnitSettingsRepository";
 
 export const DISTRICT_SERVICE_UNIT_TOTAL = 14;
 export const DEFAULT_DASHBOARD_SPREADSHEET_ID = "1H4ShB4fZCHt22J8coGXHn1KDgykjrxi3TueJDJ9ZoA8";
@@ -26,12 +42,47 @@ interface AppsScriptGetEvent {
   parameter?: Record<string, string | undefined>;
 }
 
+interface AppsScriptPostEvent extends AppsScriptGetEvent {
+  postData?: {
+    contents?: string;
+  };
+}
+
+export type DashboardApiAction =
+  | "publicDashboard"
+  | "adminLogin"
+  | "getSettings"
+  | "saveSettings"
+  | "testUnitConnection"
+  | "submitUnitMonthly";
+
+export function routeDashboardApiAction(parameter?: Record<string, string | undefined>): DashboardApiAction {
+  switch (parameter?.action) {
+    case "adminLogin":
+    case "getSettings":
+    case "saveSettings":
+    case "testUnitConnection":
+    case "submitUnitMonthly":
+      return parameter.action;
+    case "publicDashboard":
+    case "fetch":
+    default:
+      return "publicDashboard";
+  }
+}
+
 export function applicationInfo() {
   return { application: "Dashboard Vaccine", capability: "baseline-registry", version: "0.1.0" } as const;
 }
 
 function repository(): SheetsBaselineRepository {
   return new SheetsBaselineRepository(dashboardSpreadsheet());
+}
+
+function serviceUnitSettingsRepository(): SheetsServiceUnitSettingsRepository {
+  const repo = new SheetsServiceUnitSettingsRepository(dashboardSpreadsheet());
+  repo.provision();
+  return repo;
 }
 
 function dashboardSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
@@ -219,16 +270,10 @@ function vaccineMonthlyRepo(): VaccineMonthlyRepository {
  * ดึงข้อมูลวัคซีนรายเดือนแบบ aggregate สำหรับ public dashboard
  */
 export function getVaccineMonthlyPublicDashboard(reportMonth?: string): PublicVaccineDashboardModel {
-  const repo = vaccineMonthlyRepo();
+  const repo = serviceUnitSettingsRepository();
   const month = reportMonth || DEFAULT_REPORT_MONTH;
 
-  const result = repo.fetchMonthlyData({
-    reportMonth: month,
-    serviceUnitConfigs: getServiceUnitConfigs(),
-  });
-
-  // ส่งคืน public model (ไม่มีข้อมูลระบุตัวตน)
-  return repo.buildPublicDashboard(result.summary);
+  return buildPublicDashboardFromAggregates(month, repo.listMonthlyAggregates(month));
 }
 
 /**
@@ -263,17 +308,10 @@ export function getVaccineMonthlyAdminData(reportMonth?: string) {
 export function fetchVaccineMonthlyData(event?: AppsScriptGetEvent) {
   try {
     const reportMonth = event?.parameter?.month || DEFAULT_REPORT_MONTH;
-    const isAdmin = event?.parameter?.admin === "true";
 
-    if (isAdmin) {
-      const data = getVaccineMonthlyAdminData(reportMonth);
-      return ContentService.createTextOutput(JSON.stringify(data))
-        .setMimeType(ContentService.MimeType.JSON);
-    } else {
-      const data = getVaccineMonthlyPublicDashboard(reportMonth);
-      return ContentService.createTextOutput(JSON.stringify(data))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
+    const data = getVaccineMonthlyPublicDashboard(reportMonth);
+    return ContentService.createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     return ContentService.createTextOutput(
       JSON.stringify({
@@ -284,13 +322,201 @@ export function fetchVaccineMonthlyData(event?: AppsScriptGetEvent) {
   }
 }
 
+export function adminLogin(password: string): { sessionToken: string; expiresInSeconds: number } {
+  const configuredPassword = PropertiesService.getScriptProperties().getProperty(ADMIN_PASSWORD_PROPERTY);
+  if (!verifyAdminPassword(password, configuredPassword)) {
+    throw new Error("Invalid admin password");
+  }
+
+  const session = createAdminSession(new Date().toISOString(), () => Utilities.getUuid());
+  CacheService.getScriptCache().put(
+    `${ADMIN_SESSION_CACHE_PREFIX}${session.sessionToken}`,
+    session.issuedAt,
+    session.expiresInSeconds,
+  );
+
+  return {
+    sessionToken: session.sessionToken,
+    expiresInSeconds: session.expiresInSeconds,
+  };
+}
+
+export function getSettings(sessionToken: string): ServiceUnitSetting[] {
+  assertAdminSession(sessionToken);
+  const settings = serviceUnitSettingsRepository().listSettings();
+  return settings.length > 0 ? settings : defaultServiceUnitSettings();
+}
+
+export function saveSettings(
+  sessionToken: string,
+  settings: ServiceUnitSetting[],
+): { status: "SETTINGS_SAVED" } {
+  assertAdminSession(sessionToken);
+  if (!Array.isArray(settings) || settings.length === 0) {
+    throw new Error("Settings payload required");
+  }
+  assertValidSettingsPayload(settings);
+  serviceUnitSettingsRepository().saveSettings(settings);
+  return { status: "SETTINGS_SAVED" };
+}
+
+export function testUnitConnection(
+  sessionToken: string,
+  serviceUnitCode: string,
+): { ok: boolean; message: string } {
+  assertAdminSession(sessionToken);
+  const setting = serviceUnitSettingsRepository().listSettings().find(
+    (item) => item.serviceUnitCode === serviceUnitCode,
+  );
+  if (!setting) {
+    return { ok: false, message: "ไม่พบหน่วยบริการ" };
+  }
+  if (!setting.spreadsheetId) {
+    return { ok: false, message: "ยังไม่ได้ตั้งค่า Spreadsheet ID" };
+  }
+
+  const sheet = SpreadsheetApp.openById(setting.spreadsheetId).getSheetByName(setting.sheetName);
+  return sheet
+    ? { ok: true, message: "เชื่อมต่อ Google Sheets ได้" }
+    : { ok: false, message: `ไม่พบชีต ${setting.sheetName}` };
+}
+
+export function submitUnitMonthly(
+  payload: unknown,
+): { status: "ACCEPTED"; serviceUnitCode: string; reportMonth: string } {
+  const validation = validateUnitAggregateSubmission(payload);
+  if (!validation.ok) {
+    throw new Error(validation.error);
+  }
+
+  const repo = serviceUnitSettingsRepository();
+  const setting = repo.listSettings().find(
+    (item) => item.serviceUnitCode === validation.value.serviceUnitCode,
+  );
+  if (!setting?.enabled) {
+    throw new Error("SERVICE_UNIT_DISABLED_OR_MISSING");
+  }
+  if (!setting.tokenHash || hashToken(validation.value.token) !== setting.tokenHash) {
+    throw new Error("INVALID_UNIT_TOKEN");
+  }
+
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30_000);
+  try {
+    const receivedAt = new Date().toISOString();
+    const aggregates = upsertMonthlyAggregate(repo.listMonthlyAggregates(), {
+      ...validation.value,
+      receivedAt,
+    });
+    repo.saveMonthlyAggregates(aggregates);
+    repo.appendIngestionLog({
+      at: receivedAt,
+      event: "SUBMIT_UNIT_MONTHLY",
+      serviceUnitCode: validation.value.serviceUnitCode,
+      reportMonth: validation.value.reportMonth,
+      message: "accepted",
+    });
+  } finally {
+    lock.releaseLock();
+  }
+
+  return {
+    status: "ACCEPTED",
+    serviceUnitCode: validation.value.serviceUnitCode,
+    reportMonth: validation.value.reportMonth,
+  };
+}
+
+function assertAdminSession(sessionToken: string): void {
+  if (!sessionToken || !CacheService.getScriptCache().get(`${ADMIN_SESSION_CACHE_PREFIX}${sessionToken}`)) {
+    throw new Error("Admin session required");
+  }
+}
+
+function assertValidSettingsPayload(settings: readonly ServiceUnitSetting[]): void {
+  if (settings.length !== CANONICAL_SERVICE_UNITS.length) {
+    throw new Error("Settings payload must include all service units");
+  }
+
+  const seenCodes = new Set<string>();
+  for (const setting of settings) {
+    if (!setting || typeof setting !== "object") {
+      throw new Error("Invalid service unit setting");
+    }
+
+    const canonical = serviceUnitByCode(setting.serviceUnitCode);
+    if (!canonical || seenCodes.has(setting.serviceUnitCode)) {
+      throw new Error("Invalid service unit code");
+    }
+    if (setting.serviceUnitName !== canonical.serviceUnitName) {
+      throw new Error("Invalid service unit name");
+    }
+    if (typeof setting.spreadsheetId !== "string") {
+      throw new Error("Invalid spreadsheet id");
+    }
+    if (typeof setting.sheetName !== "string" || setting.sheetName.trim() === "") {
+      throw new Error("Invalid sheet name");
+    }
+    if (typeof setting.enabled !== "boolean") {
+      throw new Error("Invalid enabled flag");
+    }
+    seenCodes.add(setting.serviceUnitCode);
+  }
+}
+
+function hashToken(token: string): string {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, token)
+    .map((byte) => (byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function dashboardApiJson(data: unknown): ContentService.TextOutput {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(event?: AppsScriptPostEvent): ContentService.TextOutput {
+  try {
+    const body = event?.postData?.contents ? JSON.parse(event.postData.contents) : {};
+    const action = routeDashboardApiAction({
+      action: typeof body.action === "string" ? body.action : event?.parameter?.action,
+    });
+
+    switch (action) {
+      case "adminLogin":
+        return dashboardApiJson(adminLogin(String(body.password ?? "")));
+      case "getSettings":
+        return dashboardApiJson(getSettings(String(body.sessionToken ?? "")));
+      case "saveSettings":
+        return dashboardApiJson(saveSettings(String(body.sessionToken ?? ""), body.settings ?? []));
+      case "testUnitConnection":
+        return dashboardApiJson(
+          testUnitConnection(String(body.sessionToken ?? ""), String(body.serviceUnitCode ?? "")),
+        );
+      case "submitUnitMonthly":
+        return dashboardApiJson(submitUnitMonthly(body.payload ?? body));
+      case "publicDashboard":
+      default:
+        return dashboardApiJson(getVaccineMonthlyPublicDashboard(String(body.reportMonth ?? "") || undefined));
+    }
+  } catch (error) {
+    return dashboardApiJson({
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
 export function publicDashboardPageForRequest(event?: AppsScriptGetEvent): "publicDashboard" | "adminBaseline" {
   return event?.parameter?.page === "staff" ? "adminBaseline" : "publicDashboard";
 }
 
 function doGet(event?: AppsScriptGetEvent): GoogleAppsScript.HTML.HtmlOutput | ContentService.TextOutput {
   // ตรวจสอบว่าเป็นการเรียก API แบบ JSON หรือไม่
-  if (event?.parameter?.format === "json" || event?.parameter?.action === "fetch") {
+  if (
+    event?.parameter?.format === "json" ||
+    event?.parameter?.action === "fetch" ||
+    event?.parameter?.action === "publicDashboard"
+  ) {
     return fetchVaccineMonthlyData(event);
   }
 
@@ -316,4 +542,10 @@ Object.assign(globalThis, {
   getVaccineMonthlyPublicDashboard,
   getVaccineMonthlyAdminData,
   fetchVaccineMonthlyData,
+  adminLogin,
+  getSettings,
+  saveSettings,
+  testUnitConnection,
+  submitUnitMonthly,
+  doPost,
 });
