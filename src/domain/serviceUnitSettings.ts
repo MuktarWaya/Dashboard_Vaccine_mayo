@@ -1,4 +1,8 @@
 export const DEFAULT_MONTHLY_SHEET_NAME = "รายงานรายเดือน";
+export const DEFAULT_ADMIN_PASSWORD = "009941";
+export const ADMIN_PASSWORD_PROPERTY = "DASHBOARD_ADMIN_PASSWORD";
+export const ADMIN_SESSION_CACHE_PREFIX = "dashboard-admin-session:";
+export const ADMIN_SESSION_TTL_SECONDS = 1800;
 
 export interface CanonicalServiceUnit {
   serviceUnitCode: string;
@@ -12,6 +16,12 @@ export interface ServiceUnitSetting extends CanonicalServiceUnit {
   tokenHash?: string;
   lastSubmittedAt?: string;
   lastError?: string;
+}
+
+export interface AdminSession {
+  sessionToken: string;
+  issuedAt: string;
+  expiresInSeconds: number;
 }
 
 export const CANONICAL_SERVICE_UNITS: CanonicalServiceUnit[] = [
@@ -43,4 +53,17 @@ export function defaultServiceUnitSettings(): ServiceUnitSetting[] {
     sheetName: DEFAULT_MONTHLY_SHEET_NAME,
     enabled: true,
   }));
+}
+
+export function verifyAdminPassword(inputPassword: string, configuredPassword?: string | null): boolean {
+  const expected = configuredPassword?.trim() || DEFAULT_ADMIN_PASSWORD;
+  return inputPassword === expected;
+}
+
+export function createAdminSession(now: string, uuid: () => string): AdminSession {
+  return {
+    sessionToken: uuid(),
+    issuedAt: now,
+    expiresInSeconds: ADMIN_SESSION_TTL_SECONDS,
+  };
 }
