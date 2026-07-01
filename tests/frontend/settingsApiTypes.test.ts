@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildSettingsPayload, generateUnitCodeGsTemplate } from "../../frontend/src/services/gasApi";
+import { buildGasGetRequest, buildSettingsPayload, generateUnitCodeGsTemplate } from "../../frontend/src/services/gasApi";
 
 describe("frontend settings API helpers", () => {
   it("builds a settings payload without placing the admin password in query params", () => {
@@ -19,6 +19,14 @@ describe("frontend settings API helpers", () => {
     });
 
     expect(payload.headers).toEqual({ "Content-Type": "text/plain;charset=utf-8" });
+  });
+
+  it("builds public dashboard GET requests without headers that trigger GAS preflight", () => {
+    const request = buildGasGetRequest();
+
+    expect(request.method).toBe("GET");
+    expect(request.mode).toBe("cors");
+    expect(request.headers).toBeUndefined();
   });
 
   it("builds a token generation request through the POST body", () => {

@@ -25,14 +25,7 @@ async function fetchGAS<T>(endpoint: string, params?: Record<string, string>): P
   const url = `${GAS_WEB_APP_URL}${endpoint}${queryString ? `?${queryString}` : ''}`;
 
   try {
-    // ในการใช้งานจริง อาจต้องใช้ proxy เพื่อ bypass CORS
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'cors', // หรือใช้ proxy แทน
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(url, buildGasGetRequest());
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -44,6 +37,13 @@ async function fetchGAS<T>(endpoint: string, params?: Record<string, string>): P
     console.error('GAS API Error:', error);
     throw error;
   }
+}
+
+export function buildGasGetRequest(): RequestInit {
+  return {
+    method: 'GET',
+    mode: 'cors',
+  };
 }
 
 /**
