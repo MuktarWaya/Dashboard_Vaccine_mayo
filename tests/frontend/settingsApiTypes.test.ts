@@ -12,4 +12,12 @@ describe("frontend settings API helpers", () => {
     expect(payload.body).toContain("session-1");
     expect(payload.body).not.toContain("009941");
   });
+
+  it("uses a CORS safelisted content type for Google Apps Script POST requests", () => {
+    const payload = buildSettingsPayload("session-1", {
+      action: "getSettings",
+    });
+
+    expect(payload.headers).toEqual({ "Content-Type": "text/plain;charset=utf-8" });
+  });
 });

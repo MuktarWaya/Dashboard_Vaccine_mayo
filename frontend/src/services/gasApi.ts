@@ -47,7 +47,7 @@ async function postGAS<T>(payload: Record<string, unknown>): Promise<T> {
   const response = await fetch(GAS_WEB_APP_URL, {
     method: 'POST',
     mode: 'cors',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
@@ -63,7 +63,7 @@ export function buildSettingsPayload(sessionToken: string, payload: Record<strin
   return {
     method: 'POST',
     mode: 'cors',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ ...payload, sessionToken }),
   };
 }
