@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import type { PublicDashboardData, ExecutiveDashboardData } from '@/types/vaccine';
+import type { PublicDashboardData, ExecutiveDashboardData, AdminLoginResponse, ServiceUnitSettingView } from '@/types/vaccine';
 import { buildNotReadyDashboardData } from './dashboardViewModel';
 
 // TODO: ใส่ GAS Web App URL ของคุณที่นี่
@@ -38,6 +38,62 @@ async function fetchGAS<T>(endpoint: string, params?: Record<string, string>): P
     console.error('GAS API Error:', error);
     throw error;
   }
+}
+
+/**
+ * POST helper สำหรับ GAS API
+ */
+async function postGAS<T>(payload: Record<string, unknown>): Promise<T> {
+  const response = await fetch(GAS_WEB_APP_URL, {
+    method: 'POST',
+    mode: 'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+/**
+ * Build settings payload พร้อม session token
+ */
+export function buildSettingsPayload(sessionToken: string, payload: Record<string, unknown>): RequestInit {
+  return {
+    method: 'POST',
+    mode: 'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, sessionToken }),
+  };
+}
+
+/**
+ * Admin login
+ */
+export async function adminLogin(password: string): Promise<AdminLoginResponse> {
+  return postGAS<AdminLoginResponse>({ action: 'adminLogin', password });
+}
+
+/**
+ * Get service unit settings
+ */
+export async function getSettings(sessionToken: string): Promise<ServiceUnitSettingView[]> {
+  return postGAS<ServiceUnitSettingView[]>({ action: 'getSettings', sessionToken });
+}
+
+/**
+ * Save service unit settings
+ */
+export async function saveSettings(sessionToken: string, settings: ServiceUnitSettingView[]): Promise<{ status: string }> {
+  return postGAS<{ status: string }>({ action: 'saveSettings', sessionToken, settings });
+}
+
+/**
+ * Test unit connection
+ */
+export async function testUnitConnection(sessionToken: string, serviceUnitCode: string): Promise<{ ok: boolean; message: string }> {
+  return postGAS<{ ok: boolean; message: string }>({ action: 'testUnitConnection', sessionToken, serviceUnitCode });
 }
 
 /**

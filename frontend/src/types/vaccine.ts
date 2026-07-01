@@ -56,6 +56,23 @@ export interface PublicDashboardData {
   dataQuality: DataQualityData;
 }
 
+// Service Unit Settings types
+export interface ServiceUnitSettingView {
+  serviceUnitCode: string;
+  serviceUnitName: string;
+  spreadsheetId: string;
+  sheetName: string;
+  enabled: boolean;
+  tokenStatus: "ตั้งค่าแล้ว" | "ยังไม่ตั้งค่า";
+  lastSubmittedAt?: string;
+  lastError?: string;
+}
+
+export interface AdminLoginResponse {
+  sessionToken: string;
+  expiresInSeconds: number;
+}
+
 // Executive Dashboard types
 export interface ExecutiveDashboardData extends PublicDashboardData {
   executiveView: {
