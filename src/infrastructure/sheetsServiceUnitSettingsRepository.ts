@@ -51,7 +51,7 @@ export function rowToConfig(row: readonly unknown[]): ServiceUnitSetting {
     serviceUnitName: String(row[1] ?? ""),
     spreadsheetId: String(row[2] ?? ""),
     sheetName: String(row[3] ?? ""),
-    enabled: String(row[4] ?? "").toUpperCase() !== "FALSE",
+    enabled: String(row[4] ?? "").trim().toUpperCase() !== "FALSE",
     tokenHash: String(row[5] ?? ""),
     lastSubmittedAt: String(row[6] ?? ""),
     lastError: String(row[7] ?? ""),
