@@ -39,6 +39,7 @@ function adminLogin(password) { return globalThis.adminLogin(password); }
 function getSettings(sessionToken) { return globalThis.getSettings(sessionToken); }
 function saveSettings(sessionToken, settings) { return globalThis.saveSettings(sessionToken, settings); }
 function testUnitConnection(sessionToken, serviceUnitCode) { return globalThis.testUnitConnection(sessionToken, serviceUnitCode); }
+function generateUnitToken(sessionToken, serviceUnitCode) { return globalThis.generateUnitToken(sessionToken, serviceUnitCode); }
 function submitUnitMonthly(payload) { return globalThis.submitUnitMonthly(payload); }
 `,
   },

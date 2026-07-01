@@ -73,6 +73,12 @@ export interface AdminLoginResponse {
   expiresInSeconds: number;
 }
 
+export interface GeneratedUnitTokenResponse {
+  serviceUnitCode: string;
+  token: string;
+  tokenStatus: "ตั้งค่าแล้ว";
+}
+
 // Executive Dashboard types
 export interface ExecutiveDashboardData extends PublicDashboardData {
   executiveView: {

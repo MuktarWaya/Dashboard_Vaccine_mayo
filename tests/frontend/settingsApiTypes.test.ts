@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildSettingsPayload } from "../../frontend/src/services/gasApi";
+import { buildSettingsPayload, generateUnitCodeGsTemplate } from "../../frontend/src/services/gasApi";
 
 describe("frontend settings API helpers", () => {
   it("builds a settings payload without placing the admin password in query params", () => {
@@ -19,5 +19,32 @@ describe("frontend settings API helpers", () => {
     });
 
     expect(payload.headers).toEqual({ "Content-Type": "text/plain;charset=utf-8" });
+  });
+
+  it("builds a token generation request through the POST body", () => {
+    const payload = buildSettingsPayload("session-1", {
+      action: "generateUnitToken",
+      serviceUnitCode: "09941",
+    });
+
+    expect(payload.body).toContain("generateUnitToken");
+    expect(payload.body).toContain("09941");
+    expect(payload.body).toContain("session-1");
+  });
+
+  it("generates unit Code.gs without child-level fields", () => {
+    const code = generateUnitCodeGsTemplate({
+      centralApiUrl: "https://script.google.com/macros/s/central/exec",
+      serviceUnitCode: "09941",
+      serviceUnitName: "โรงพยาบาลส่งเสริมสุขภาพตำบลตรัง",
+      sheetName: "baseline_import_template_09941_v2",
+      token: "unit-token",
+    });
+
+    expect(code).toContain("submitUnitMonthly");
+    expect(code).toContain("UrlFetchApp.fetch");
+    expect(code).toContain("สถานะวัคซีน");
+    expect(code).not.toContain("cid");
+    expect(code).not.toContain("ชื่อเด็ก");
   });
 });

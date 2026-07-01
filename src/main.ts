@@ -56,6 +56,7 @@ export type DashboardApiAction =
   | "getSettings"
   | "saveSettings"
   | "testUnitConnection"
+  | "generateUnitToken"
   | "submitUnitMonthly";
 
 export function routeDashboardApiAction(parameter?: Record<string, string | undefined>): DashboardApiAction {
@@ -64,6 +65,7 @@ export function routeDashboardApiAction(parameter?: Record<string, string | unde
     case "getSettings":
     case "saveSettings":
     case "testUnitConnection":
+    case "generateUnitToken":
     case "submitUnitMonthly":
       return parameter.action;
     case "publicDashboard":
@@ -346,7 +348,7 @@ export function adminLogin(password: string): { sessionToken: string; expiresInS
 export function getSettings(sessionToken: string): ServiceUnitSettingView[] {
   assertAdminSession(sessionToken);
   const settings = serviceUnitSettingsRepository().listSettings();
-  return (settings.length > 0 ? settings : defaultServiceUnitSettings()).map(toServiceUnitSettingView);
+  return mergeStoredSettingsWithDefaults(settings).map(toServiceUnitSettingView);
 }
 
 export function saveSettings(
@@ -392,6 +394,32 @@ export function testUnitConnection(
   return sheet
     ? { ok: true, message: "เชื่อมต่อ Google Sheets ได้" }
     : { ok: false, message: `ไม่พบชีต ${setting.sheetName}` };
+}
+
+export function generateUnitToken(
+  sessionToken: string,
+  serviceUnitCode: string,
+): { serviceUnitCode: string; token: string; tokenStatus: "ตั้งค่าแล้ว" } {
+  assertAdminSession(sessionToken);
+  const canonical = serviceUnitByCode(serviceUnitCode);
+  if (!canonical) {
+    throw new Error("Invalid service unit code");
+  }
+
+  const repo = serviceUnitSettingsRepository();
+  const settings = mergeStoredSettingsWithDefaults(repo.listSettings());
+  const token = Utilities.getUuid().replace(/-/g, "");
+  repo.saveSettings(settings.map((setting) => (
+    setting.serviceUnitCode === serviceUnitCode
+      ? { ...setting, tokenHash: hashToken(token), lastError: "" }
+      : setting
+  )));
+
+  return {
+    serviceUnitCode,
+    token,
+    tokenStatus: "ตั้งค่าแล้ว",
+  };
 }
 
 export function submitUnitMonthly(
@@ -477,6 +505,14 @@ function assertValidSettingsPayload(settings: readonly ServiceUnitSettingView[])
   }
 }
 
+function mergeStoredSettingsWithDefaults(storedSettings: readonly ServiceUnitSetting[]): ServiceUnitSetting[] {
+  const storedByCode = new Map(storedSettings.map((setting) => [setting.serviceUnitCode, setting]));
+  return defaultServiceUnitSettings().map((defaultSetting) => ({
+    ...defaultSetting,
+    ...storedByCode.get(defaultSetting.serviceUnitCode),
+  }));
+}
+
 function hashToken(token: string): string {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, token)
     .map((byte) => (byte < 0 ? byte + 256 : byte).toString(16).padStart(2, "0"))
@@ -505,6 +541,8 @@ function doPost(event?: AppsScriptPostEvent): ContentService.TextOutput {
         return dashboardApiJson(
           testUnitConnection(String(body.sessionToken ?? ""), String(body.serviceUnitCode ?? "")),
         );
+      case "generateUnitToken":
+        return dashboardApiJson(generateUnitToken(String(body.sessionToken ?? ""), String(body.serviceUnitCode ?? "")));
       case "submitUnitMonthly":
         return dashboardApiJson(submitUnitMonthly(body.payload ?? body));
       case "publicDashboard":
@@ -559,6 +597,7 @@ Object.assign(globalThis, {
   getSettings,
   saveSettings,
   testUnitConnection,
+  generateUnitToken,
   submitUnitMonthly,
   doPost,
 });

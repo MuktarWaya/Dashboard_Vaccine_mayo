@@ -16,6 +16,7 @@ describe("service unit API routing", () => {
     expect(routeDashboardApiAction({ action: "getSettings" })).toBe("getSettings");
     expect(routeDashboardApiAction({ action: "saveSettings" })).toBe("saveSettings");
     expect(routeDashboardApiAction({ action: "testUnitConnection" })).toBe("testUnitConnection");
+    expect(routeDashboardApiAction({ action: "generateUnitToken" })).toBe("generateUnitToken");
     expect(routeDashboardApiAction({ action: "submitUnitMonthly" })).toBe("submitUnitMonthly");
   });
 

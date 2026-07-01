@@ -7,5 +7,6 @@ describe("Apps Script bundle globals", () => {
 
     expect(bundle).toMatch(/^function doGet\(event\)/m);
     expect(bundle).toMatch(/^function doPost\(event\)/m);
+    expect(bundle).toMatch(/^function generateUnitToken\(sessionToken, serviceUnitCode\)/m);
   });
 });
