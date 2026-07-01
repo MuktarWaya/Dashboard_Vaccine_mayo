@@ -148,8 +148,10 @@ function buildMonthlyAggregate(reportMonth) {
   const values = sheet.getDataRange().getValues();
   const headers = values[0].map(String);
   const rows = values.slice(1);
-  const statusIndex = headers.indexOf('สถานะวัคซีน');
-  if (statusIndex === -1) throw new Error('ไม่พบคอลัมน์ สถานะวัคซีน');
+  const statusIndex = findHeaderIndex(headers, ['สถานะวัคซีน', 'baseline_vaccine_status', 'vaccine_status', 'status']);
+  if (statusIndex === -1) {
+    throw new Error('ไม่พบคอลัมน์สถานะวัคซีน: ต้องมี สถานะวัคซีน หรือ baseline_vaccine_status');
+  }
 
   const counts = {
     totalChildren: rows.filter(function(row) { return row.join('').trim() !== ''; }).length,
@@ -163,11 +165,12 @@ function buildMonthlyAggregate(reportMonth) {
 
   rows.forEach(function(row) {
     const status = String(row[statusIndex] || '').trim();
-    if (status === 'ตามกำหนด') counts.onSchedule += 1;
-    else if (status === 'ล่าช้า') counts.delayed += 1;
-    else if (status === 'ปฏิเสธ') counts.refused += 1;
-    else if (status === 'เลื่อนนัด') counts.postponed += 1;
-    else if (status === 'ไม่พบ') counts.notFound += 1;
+    const bucket = statusBucket(status);
+    if (bucket === 'onSchedule') counts.onSchedule += 1;
+    else if (bucket === 'delayed') counts.delayed += 1;
+    else if (bucket === 'refused') counts.refused += 1;
+    else if (bucket === 'postponed') counts.postponed += 1;
+    else if (bucket === 'notFound') counts.notFound += 1;
     else if (status) counts.followedUp += 1;
   });
 
@@ -184,6 +187,37 @@ function buildMonthlyAggregate(reportMonth) {
     submittedAt: new Date().toISOString(),
     token: UNIT_TOKEN,
   };
+}
+
+function findHeaderIndex(headers, candidates) {
+  const normalizedHeaders = headers.map(normalizeText);
+  for (var i = 0; i < candidates.length; i += 1) {
+    const index = normalizedHeaders.indexOf(normalizeText(candidates[i]));
+    if (index !== -1) return index;
+  }
+  return -1;
+}
+
+function normalizeText(value) {
+  return String(value || '').trim().toLowerCase().replace(/[\\s_-]+/g, '');
+}
+
+function statusBucket(status) {
+  const value = normalizeText(status);
+  if (!value) return '';
+  if (value === normalizeText('ตามกำหนด') || value === normalizeText('ฉีดตามเกณฑ์')) return 'onSchedule';
+  if (value.indexOf(normalizeText('ปฏิเสธ')) !== -1 || value.indexOf('refused') !== -1) return 'refused';
+  if (value.indexOf(normalizeText('เลื่อนนัด')) !== -1 || value.indexOf('postpone') !== -1) return 'postponed';
+  if (value.indexOf(normalizeText('ไม่พบ')) !== -1 || value.indexOf('notfound') !== -1) return 'notFound';
+  if (
+    value.indexOf(normalizeText('ล่าช้า')) !== -1 ||
+    value.indexOf(normalizeText('ยังไม่ครบเกณฑ์')) !== -1 ||
+    value.indexOf('delayed') !== -1 ||
+    value.indexOf('late') !== -1
+  ) {
+    return 'delayed';
+  }
+  return 'followedUp';
 }
 `;
 }

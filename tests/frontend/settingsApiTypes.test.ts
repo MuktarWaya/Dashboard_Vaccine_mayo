@@ -52,6 +52,8 @@ describe("frontend settings API helpers", () => {
     expect(code).toContain("submitUnitMonthly");
     expect(code).toContain("UrlFetchApp.fetch");
     expect(code).toContain("สถานะวัคซีน");
+    expect(code).toContain("baseline_vaccine_status");
+    expect(code).toContain("ฉีดตามเกณฑ์");
     expect(code).not.toContain("cid");
     expect(code).not.toContain("ชื่อเด็ก");
   });
